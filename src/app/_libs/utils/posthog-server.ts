@@ -17,6 +17,6 @@ export function getPostHogServer() {
 export async function captureServerException(error: unknown, distinctId?: string) {
   const client = getPostHogServer();
   client.captureException(error, distinctId || undefined, {
-    environment: env.NEXT_PUBLIC_POSTHOG_ENVIRONMENT,
+    // environment: env.NEXT_PUBLIC_POSTHOG_ENVIRONMENT,
   });
 }
