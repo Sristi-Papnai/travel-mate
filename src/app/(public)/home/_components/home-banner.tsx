@@ -2,9 +2,11 @@
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { GOOGLEIMAGES } from "@/app/_libs/constants/google-images";
+import { useLoginModal } from "@/app/(public)/_components/login-modal-context";
 
 
 export default function HomeBanner() {
+  const { openLogin } = useLoginModal();
 
   return (
     <section>
@@ -23,6 +25,7 @@ export default function HomeBanner() {
 
           <div className="flex items-end space-x-6 text-white">
             <Button
+              onClick={openLogin}
               variant="default"
               className="bg-green-500 hover:bg-green-600 text-white px-6 py-3"
             >
