@@ -1,14 +1,12 @@
-import Navbar from '../../components/ui/Navbar';
-// import Footer from './../_components/Footer';
+import Footer from "@/app/(public)/_components/footer";
+import Navbar from "../_components/navbar";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className="bg-gray-50">
-        <Navbar />
-        <main>{children}</main>
-        {/* <Footer /> */}
-      </body>
-    </html>
+    <>
+      <Navbar />
+      <main>{children}</main>
+      <Footer />
+    </>
   );
 }

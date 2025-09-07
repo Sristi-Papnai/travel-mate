@@ -1,7 +1,7 @@
 "use client";
 
-import { GoogleTagManager } from "@next/third-parties/google";
-import { env } from "env";
+// import { GoogleTagManager } from "@next/third-parties/google";
+// import { env } from "env";
 
 export default function GoogleAnalyticsScripts() {
   return (

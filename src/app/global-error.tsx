@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import NextError from "next/error";
 
 import * as Sentry from "@sentry/nextjs";
-import { env } from "env";
+// import { env } from "env";
 import posthog from "posthog-js";
 
 export default function GlobalError({ error }: { error: Error & { digest?: string } }) {

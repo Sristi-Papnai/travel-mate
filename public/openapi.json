@@ -181,6 +181,32 @@
     }
   },
   "paths": {
+    "/newsletter": {
+      "post": {
+        "operationId": "post-newsletter",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Newsletter"
+        ],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
     "/openapi/{id}": {
       "get": {
         "operationId": "get-openapi-{id}",
