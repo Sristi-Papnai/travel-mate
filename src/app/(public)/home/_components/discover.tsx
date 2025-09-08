@@ -11,7 +11,7 @@ export default function Discover() {
           At TravelMate, we specialize in crafting personalized itineraries that suit your
           unique preferences.
         </p>
-        <DiscoverCards></DiscoverCards>
+        <DiscoverCards />
       </section>
     );
   }

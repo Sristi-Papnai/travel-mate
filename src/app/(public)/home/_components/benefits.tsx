@@ -1,6 +1,7 @@
 import { GOOGLEIMAGES } from "@/app/_libs/constants/google-images";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { FaPlaneDeparture, FaClock } from "react-icons/fa";
 
 export default function Benefits() {
   return (
@@ -22,13 +23,7 @@ export default function Benefits() {
             <div>
                 <div className="flex items-center space-x-2">
                 <span className="text-xl"> 
-                  <Image
-                  src="/icons/clock-black.svg"
-                  alt="Email Icon"
-                  width={20}
-                  height={20}
-                  className="opacity-70"
-                  />
+                <FaClock color="black"/>
                 </span>
                 <h3 className="font-semibold text-gray-900">Time-Saving</h3>
                 </div>
@@ -40,13 +35,7 @@ export default function Benefits() {
             <div>
                 <div className="flex items-center space-x-2">
                 <span className="text-xl"> 
-                  <Image
-                  src="/icons/plane-blue.svg"
-                  alt="Email Icon"
-                  width={20}
-                  height={20}
-                  className="opacity-70"
-                  />
+                <FaPlaneDeparture  color="blue"/>
                 </span>
                 <h3 className="font-semibold text-gray-900">Cost-Efficient</h3>
                 </div>

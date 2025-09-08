@@ -1,16 +1,11 @@
-"use client"
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
 import { GOOGLEIMAGES } from "@/app/_libs/constants/google-images";
-import { useLoginModal } from "@/app/(public)/_components/login-modal-context";
-
+import BannerButtons from "./banner-buttons";
 
 export default function HomeBanner() {
-  const { openLogin } = useLoginModal();
-
   return (
     <section>
-      <div className="relative h-[500px] w-full flex  bg-black">
+      <div className="relative h-[500px] w-full flex bg-black">
         {/* Left Content Section */}
         <div className="w-[50%] flex flex-col items-start justify-center space-y-6 text-left px-10">
           <h1 className="text-white text-5xl ">
@@ -23,21 +18,8 @@ export default function HomeBanner() {
             focus on making memories.
           </p>
 
-          <div className="flex items-end space-x-6 text-white">
-            <Button
-              onClick={openLogin}
-              variant="default"
-              className="bg-green-500 hover:bg-green-600 text-white px-6 py-3"
-            >
-              Get Started
-            </Button>
-            <Button
-              variant="outline"
-              className="bg-black text-white border border-white hover:bg-white hover:text-black px-5 py-2"
-            >
-              Learn More
-            </Button>
-          </div>
+          {/* Client Buttons */}
+          <BannerButtons />
         </div>
 
         {/* Right Image Section */}
@@ -51,7 +33,8 @@ export default function HomeBanner() {
           />
         </div>
       </div>
-      <div className="relative h-[500px] w-full flex  bg-gray-500">
+
+      <div className="relative h-[500px] w-full flex bg-gray-500">
         {/* Left Content Section */}
         <div className="w-[50%] flex flex-col items-start justify-center space-y-6 text-left px-10">
           <h1 className="text-white text-5xl ">
@@ -60,7 +43,8 @@ export default function HomeBanner() {
             Personalized Trip Solution
           </h1>
           <p className="text-white text-lg">
-          TravelMate simplifies your journey by tailoring trips to your unique preferences and interests. Say goodbye to generic itineraries and hello to unforgettable adventures crafted just for you.
+            TravelMate simplifies your journey by tailoring trips to your unique preferences and interests. 
+            Say goodbye to generic itineraries and hello to unforgettable adventures crafted just for you.
           </p>
         </div>
 

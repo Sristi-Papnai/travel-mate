@@ -1,6 +1,9 @@
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
+import { MdLocationOn } from "react-icons/md";
+import { FaPhoneAlt } from "react-icons/fa";
+import { IoMdMail } from "react-icons/io";
 
 export default function Footer() {
   return (
@@ -15,13 +18,7 @@ export default function Footer() {
           <div className="space-y-4">
             {/* Email */}
             <div className="flex items-start space-x-3">
-              <Image
-                src="/icons/mail-white.svg"
-                alt="Email Icon"
-                width={20}
-                height={20}
-                className="opacity-70"
-              />
+            <IoMdMail />
               <div>
                 <p className="font-semibold">Email</p>
                 <p className="text-gray-400 text-sm">Send us a message</p>
@@ -31,13 +28,7 @@ export default function Footer() {
 
             {/* Phone */}
             <div className="flex items-start space-x-3">
-              <Image
-                src="/icons/phone-white.svg"
-                alt="Phone Icon"
-                width={20}
-                height={20}
-                className="opacity-70"
-              />
+            <FaPhoneAlt />
               <div>
                 <p className="font-semibold">Phone</p>
                 <p className="text-gray-400 text-sm">Call us anytime</p>
@@ -47,13 +38,7 @@ export default function Footer() {
 
             {/* Office */}
             <div className="flex items-start space-x-3">
-              <Image
-                src="/icons/location-white.svg"
-                alt="Office Icon"
-                width={20}
-                height={20}
-                className="opacity-70"
-              />
+              <MdLocationOn />
               <div>
                 <p className="font-semibold">Office</p>
                 <p className="text-gray-400 text-sm">
