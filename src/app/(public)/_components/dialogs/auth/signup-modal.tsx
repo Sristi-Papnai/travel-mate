@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback} from "react";
+import { useState, useEffect, useCallback, type MouseEvent} from "react";
 import { useDialog } from "@/context/dialog-context";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -47,11 +47,11 @@ export default function SignUpModal() {
       reset();
       setMsg("");
     }
-  }, [isSignupOpen, reset]);
+  }, [isSignupOpen]);
 
   // inside your component
   const handleGoToLogin =useCallback(
-    (e: React.MouseEvent<HTMLParagraphElement>) => {
+    (e: MouseEvent<HTMLParagraphElement>) => {
       e.preventDefault();
       closeSignup();
       openLogin();

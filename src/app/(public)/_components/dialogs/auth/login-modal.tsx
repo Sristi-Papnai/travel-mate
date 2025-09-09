@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useState, useEffect, useCallback, type MouseEvent} from "react";
 import { useDialog } from "@/context/dialog-context";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,7 @@ interface LoginFormInputs {
 export default function LoginModal() {
   const router = useRouter();
   const { isLoginOpen, closeLogin, openSignup, openForgot } = useDialog();
-  const [msg, setMsg] = React.useState("");
+  const [msg, setMsg] = useState("");
 
 
   const {
@@ -33,11 +33,11 @@ export default function LoginModal() {
   } = useForm<LoginFormInputs>({ mode: "onBlur" });
 
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isLoginOpen) {
       reset();
     }
-  }, [isLoginOpen, reset]);
+  }, [isLoginOpen]);
 
 
   const onSubmit = async (data: LoginFormInputs) => {
@@ -64,8 +64,8 @@ export default function LoginModal() {
     }
   };
 
-  const handleSignupClick = React.useCallback(
-    (e: React.MouseEvent) => {
+  const handleSignupClick = useCallback(
+    (e: MouseEvent) => {
       e.preventDefault();
       closeLogin();
       openSignup();
@@ -73,8 +73,8 @@ export default function LoginModal() {
     [closeLogin, openSignup] // deps
   );
   
-  const handleForgotPassword = React.useCallback(
-    (e: React.MouseEvent) => {
+  const handleForgotPassword = useCallback(
+    (e: MouseEvent) => {
       e.preventDefault();
       closeLogin();
       openForgot();

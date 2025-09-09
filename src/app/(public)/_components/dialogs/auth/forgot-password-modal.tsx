@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useEffect, useCallback} from "react";
 import { useForm } from "react-hook-form";
 import { useDialog } from "@/context/dialog-context";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,7 @@ export default function ForgotPasswordModal() {
     formState: { errors, isValid },
   } = useForm<ForgotFormInputs>({ mode: "onBlur" });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isForgotOpen) {
       reset();
     }
@@ -37,7 +37,7 @@ export default function ForgotPasswordModal() {
     // TODO: Call forgot password API
   };
 
-  const handleGoBack = React.useCallback(() => {
+  const handleGoBack = useCallback(() => {
     closeForgot();
     openLogin();
   }, [closeForgot, openLogin]);
