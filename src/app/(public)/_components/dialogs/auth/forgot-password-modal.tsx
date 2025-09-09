@@ -30,7 +30,7 @@ export default function ForgotPasswordModal() {
     if (!isForgotOpen) {
       reset();
     }
-  }, [isForgotOpen, reset]);
+  }, [isForgotOpen]);
 
   const onSubmit = () => {
     // console.log("Password reset requested for:", data);
