@@ -11,6 +11,9 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { signIn } from "next-auth/react";
+import { registerUser } from "@/app/services/api/authApi";
+import { useRouter } from "next/navigation";
 
 interface SignUpFormInputs {
   firstName: string;
@@ -22,7 +25,9 @@ interface SignUpFormInputs {
 }
 
 export default function SignUpModal() {
+  const router = useRouter();
   const { isSignupOpen, closeSignup, openLogin } = useDialog();
+  const [msg, setMsg] = React.useState("");
 
   const {
     register,
@@ -39,14 +44,61 @@ export default function SignUpModal() {
 
   // reset form when modal opens
   React.useEffect(() => {
-    if (isSignupOpen) {
+    if (!isSignupOpen) {
       reset();
+      setMsg("");
     }
   }, [isSignupOpen, reset]);
 
-  const onSubmit = () => {
-    // console.log("Sign up data:", data);
-    // TODO - implement signup API call here
+  const onSubmit = async (data: SignUpFormInputs) => {
+    setMsg("");
+  
+    try {
+      const { res, result } = await registerUser({
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        password: data.password,
+      });
+  
+      if (!res.ok || result.error) {
+        const errorMessage =
+          result.errors?.email ||
+          result.errors?.fields ||
+          result.msg ||
+          "Signup failed";
+        setMsg(errorMessage);
+        return;
+      }
+  
+      if (!res.ok || result.error) {
+        // Use error message from response if available
+        const errorMessage =
+          result.errors?.email ||
+          result.errors?.fields ||
+          result.msg ||
+          "Signup failed";
+        setMsg(errorMessage);
+        return;
+      }
+  
+      // Auto sign-in after successful signup
+      const signInResult = await signIn("credentials", {
+        redirect: false,
+        email: data.email,
+        password: data.password,
+      });
+  
+      if (signInResult?.ok) {
+        // Successful login, redirect to dashboard
+        router.push("/dashboard");
+      } else {
+        setMsg("Signup succeeded but login failed. Please login manually.");
+      }
+    } catch (err) {
+      console.error("Signup error:", err);
+      setMsg("Something went wrong. Please try again.");
+    }
   };
 
   return (
@@ -169,6 +221,10 @@ export default function SignUpModal() {
           </div>
           {errors.agree && (
             <p className="text-red-500 text-sm mt-1">{errors.agree.message}</p>
+          )}
+
+          {msg && (
+            <p className="text-center text-sm mt-2 text-red-500">{msg}</p>
           )}
 
           <Button

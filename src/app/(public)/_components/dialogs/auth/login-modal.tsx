@@ -1,8 +1,10 @@
 "use client";
 
+import * as React from "react";
 import { useDialog } from "@/context/dialog-context";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
+import { signIn } from "next-auth/react";
 import {
   Dialog,
   DialogContent,
@@ -10,6 +12,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { useRouter } from "next/navigation";
 
 interface LoginFormInputs {
   email: string;
@@ -17,7 +20,10 @@ interface LoginFormInputs {
 }
 
 export default function LoginModal() {
+  const router = useRouter();
   const { isLoginOpen, closeLogin, openSignup, openForgot } = useDialog();
+  const [msg, setMsg] = React.useState("");
+
 
   const {
     register,
@@ -25,8 +31,27 @@ export default function LoginModal() {
     formState: { errors, isValid },
   } = useForm<LoginFormInputs>({ mode: "onBlur" });
 
-  const onSubmit = () => {
-    // console.log("Logging in with:", data);
+  const onSubmit = async (data: LoginFormInputs) => {
+    setMsg("");
+
+    try {
+      const result = await signIn("credentials", {
+        redirect: false,
+        email: data.email,
+        password: data.password,
+      });
+
+      if (result?.error) {
+        setMsg("Invalid Credentials");
+        return;
+      }
+
+      // Successful login, redirect to dashboard
+      router.push("/dashboard");
+    } catch (err) {
+      console.error("Login error:", err);
+      setMsg("Something went wrong. Please try again.");
+    }
   };
 
   const handleSignupClick = (e: React.MouseEvent) => {
@@ -34,6 +59,12 @@ export default function LoginModal() {
     closeLogin();
     openSignup();
   };
+  const handleForgotPassword = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    closeLogin();
+    openForgot();
+  };
+  
 
   return (
     <Dialog open={isLoginOpen} onOpenChange={(open) => !open && closeLogin()}>
@@ -46,6 +77,10 @@ export default function LoginModal() {
             Login form modal
           </DialogDescription>
         </DialogHeader>
+
+        {msg && (
+          <p className="text-red-500 text-sm mb-4 text-center">{msg}</p>
+        )}
 
         <form className="space-y-4 text-black" onSubmit={handleSubmit(onSubmit)}>
           <div>
@@ -92,17 +127,14 @@ export default function LoginModal() {
           </div>
 
           <div>
-            <a
-              href="#"
-              className="text-sm text-blue-600"
-              onClick={(e) => {
-                e.preventDefault();
-                closeLogin();
-                openForgot();
-              }}
-            >
-              Forgot your password?
-            </a>
+          <a
+            href="#"
+            className="text-sm text-blue-600"
+            onClick={handleForgotPassword}
+          >
+            Forgot your password?
+          </a>
+
           </div>
 
           <Button

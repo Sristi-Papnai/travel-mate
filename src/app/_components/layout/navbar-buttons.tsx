@@ -1,10 +1,37 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import Link from "next/link";
 import { useDialog } from "@/context/dialog-context";
+import { useSession, signOut } from "next-auth/react";
+import { CgProfile } from "react-icons/cg";
+
 
 export default function NavbarButtons() {
   const { openSignup } = useDialog();
+  const { data: session } = useSession(); 
+
+
+  if (session && session.user) {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+
+          <CgProfile size={28} />
+
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="bg-white text-black shadow-md rounded-md p-2">
+          <DropdownMenuItem asChild>
+            <Link href="/">Account</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <button onClick={() => signOut()}>Logout</button>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
 
   return (
     <>

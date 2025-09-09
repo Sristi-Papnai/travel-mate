@@ -7,6 +7,8 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import NavbarButtons from "./navbar-buttons"; 
+import { IoMdArrowDropdown } from "react-icons/io";
+
 
 export default function Navbar() {
   return (
@@ -32,7 +34,8 @@ export default function Navbar() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="flex items-center hover:text-gray-300">
-              More Info <span className="ml-1">▾</span>
+              More Info <span className="ml-1"><IoMdArrowDropdown />
+              </span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="bg-white text-black shadow-md rounded-md p-2">

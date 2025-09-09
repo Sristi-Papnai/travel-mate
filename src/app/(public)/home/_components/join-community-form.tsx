@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
-import { subscribeToNewsletter } from "@/app/services/newsletterApi";
+import { subscribeToNewsletter } from "@/app/services/api/newsletterApi";
 import { useState } from "react";
 
 type FormData = {

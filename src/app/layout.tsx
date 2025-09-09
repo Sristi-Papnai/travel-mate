@@ -15,6 +15,9 @@ import SignUpModal from "@/app/(public)/_components/dialogs/auth/signup-modal";
 import ForgotPasswordModal from "@/app/(public)/_components/dialogs/auth/forgot-password-modal";
 import { DialogProvider } from "@/context/dialog-context";
 
+import AuthProvider from "@/app/providers/session-provider";
+import Navbar from "@/app/_components/layout/navbar";
+
 export { metadata, viewport };
 
 export default function RootLayout({
@@ -25,16 +28,19 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${geologica.variable} font-sans antialiased`}>
-        <DialogProvider>
-            {children}
-            <LoginModal /> 
-            <SignUpModal />
-            <ForgotPasswordModal />
-            <SonnarToaster />
-            <GoogleAnalyticsScripts />
-            <SpeedInsights />
-            <Analytics />
-        </DialogProvider>
+        <AuthProvider>
+          <DialogProvider>/
+              <Navbar />
+              {children}
+              <LoginModal /> 
+              <SignUpModal />
+              <ForgotPasswordModal />
+              <SonnarToaster />
+              <GoogleAnalyticsScripts />
+              <SpeedInsights />
+              <Analytics />
+          </DialogProvider>
+        </AuthProvider>
         <Script
           id="json-ld"
           type="application/ld+json"

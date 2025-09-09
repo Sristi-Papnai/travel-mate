@@ -1,11 +1,11 @@
 {
-  "id": "d9f40481-b00b-4801-8679-029096d5abdb",
-  "prevId": "e88af043-37b9-4fb4-85d9-a2af9f41e549",
+  "id": "df86ab3a-9de4-4a6c-8260-5cdf7e3cd910",
+  "prevId": "61d1b7bb-b5e7-4e2d-95be-27d388cfe845",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.newsletter_subscription": {
-      "name": "newsletter_subscription",
+    "public.newsletter_subscriptions": {
+      "name": "newsletter_subscriptions",
       "schema": "",
       "columns": {
         "id": {
@@ -32,8 +32,8 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "newsletter_subscription_email_unique": {
-          "name": "newsletter_subscription_email_unique",
+        "newsletter_subscriptions_email_unique": {
+          "name": "newsletter_subscriptions_email_unique",
           "nullsNotDistinct": false,
           "columns": [
             "email"
@@ -50,30 +50,19 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "integer",
+          "type": "serial",
           "primaryKey": true,
-          "notNull": true,
-          "identity": {
-            "type": "always",
-            "name": "users_id_seq",
-            "schema": "public",
-            "increment": "1",
-            "startWith": "1",
-            "minValue": "1",
-            "maxValue": "2147483647",
-            "cache": "1",
-            "cycle": false
-          }
+          "notNull": true
         },
-        "name": {
-          "name": "name",
+        "first_name": {
+          "name": "first_name",
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
         },
-        "age": {
-          "name": "age",
-          "type": "integer",
+        "last_name": {
+          "name": "last_name",
+          "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
         },
@@ -82,6 +71,31 @@
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
+        },
+        "password": {
+          "name": "password",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "magic_token": {
+          "name": "magic_token",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "token_expiry_date": {
+          "name": "token_expiry_date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
         }
       },
       "indexes": {},

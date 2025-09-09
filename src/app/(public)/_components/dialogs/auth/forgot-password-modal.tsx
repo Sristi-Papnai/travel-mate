@@ -27,7 +27,7 @@ export default function ForgotPasswordModal() {
   } = useForm<ForgotFormInputs>({ mode: "onBlur" });
 
   React.useEffect(() => {
-    if (isForgotOpen) {
+    if (!isForgotOpen) {
       reset();
     }
   }, [isForgotOpen, reset]);

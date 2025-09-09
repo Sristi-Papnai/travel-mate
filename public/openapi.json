@@ -181,6 +181,32 @@
     }
   },
   "paths": {
+    "/forgot-password": {
+      "post": {
+        "operationId": "post-forgot-password",
+        "summary": "(Simplified: In real app, send reset link via email)",
+        "description": "",
+        "tags": [
+          "Forgot-password"
+        ],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
     "/newsletter": {
       "post": {
         "operationId": "post-newsletter",
@@ -260,6 +286,32 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/register": {
+      "post": {
+        "operationId": "post-register",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Register"
+        ],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "responses": {
           "400": {
             "$ref": "#/components/responses/400"
           },
