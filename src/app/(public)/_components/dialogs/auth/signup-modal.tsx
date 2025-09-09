@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect} from "react";
+import { useState, useEffect, useCallback} from "react";
 import { useDialog } from "@/context/dialog-context";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { signIn } from "next-auth/react";
 import { registerUser } from "@/app/services/api/authApi";
 import { useRouter } from "next/navigation";
 
@@ -50,6 +49,17 @@ export default function SignUpModal() {
     }
   }, [isSignupOpen, reset]);
 
+  // inside your component
+  const handleGoToLogin =useCallback(
+    (e: React.MouseEvent<HTMLParagraphElement>) => {
+      e.preventDefault();
+      closeSignup();
+      openLogin();
+    },
+    [closeSignup, openLogin]
+  );
+
+
   const onSubmit = async (data: SignUpFormInputs) => {
     setMsg("");
   
@@ -71,35 +81,14 @@ export default function SignUpModal() {
         return;
       }
   
-      if (!res.ok || result.error) {
-        // Use error message from response if available
-        const errorMessage =
-          result.errors?.email ||
-          result.errors?.fields ||
-          result.msg ||
-          "Signup failed";
-        setMsg(errorMessage);
-        return;
-      }
-  
-      // Auto sign-in after successful signup
-      const signInResult = await signIn("credentials", {
-        redirect: false,
-        email: data.email,
-        password: data.password,
-      });
-  
-      if (signInResult?.ok) {
-        // Successful login, redirect to dashboard
-        router.push("/dashboard");
-      } else {
-        setMsg("Signup succeeded but login failed. Please login manually.");
-      }
+      router.push("/dashboard");
+      closeSignup();
     } catch (err) {
       console.error("Signup error:", err);
       setMsg("Something went wrong. Please try again.");
     }
   };
+  
 
   return (
     <Dialog open={isSignupOpen} onOpenChange={(open) => !open && closeSignup()}>
@@ -242,17 +231,12 @@ export default function SignUpModal() {
 
         <p className="text-center mt-6 text-sm text-black">
           Already have an account?{" "}
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              closeSignup();
-              openLogin();
-            }}
-            className="text-blue-600 font-medium"
+          <span
+            onClick={handleGoToLogin}
+            className="text-blue-600 font-medium cursor-pointer"
           >
-            Log in
-          </a>
+            Login
+          </span>
         </p>
       </DialogContent>
     </Dialog>

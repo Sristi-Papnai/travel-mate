@@ -14,6 +14,21 @@ export const OpenApiResponse = z.object({
 
 
 /**
+ * User registration request payload
+ */
+export interface IUserRegisterRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+}
+
+/**
+ * User registration response (extends standard API response)
+ */
+export type IUserRegisterResponse = IStandardResponse;
+
+/**
  * Newsletter request payload
  */
 export interface INewsletterRequest {
@@ -23,6 +38,34 @@ export interface INewsletterRequest {
 /**
  * Newsletter response (extends standard API response)
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface INewsletterResponse extends IStandardResponse {}
+export type INewsletterResponse = IStandardResponse;
+
+// ---------------- Zod Schemas (optional, for validation or OpenAPI generation) ----------------
+
+export const UserRegisterRequest = z.object({
+  firstName: z.string().describe("First name of the user"),
+  lastName: z.string().describe("Last name of the user"),
+  email: z.string().email().describe("Email of the user"),
+  password: z.string().min(6).describe("Password for the account"),
+});
+
+export const UserRegisterResponse = z.object({
+  success: z.boolean().describe("Status of the response"),
+  msg: z.string().describe("Response message"),
+  data: z
+    .object({
+      id: z.string().describe("User ID"),
+      firstName: z.string().describe("First name"),
+      lastName: z.string().describe("Last name"),
+      email: z.string().describe("Email"),
+    })
+    .optional(),
+});
+
+export interface IRegisterPayload {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+}
 

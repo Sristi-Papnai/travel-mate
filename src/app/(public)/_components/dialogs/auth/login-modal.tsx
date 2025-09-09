@@ -57,6 +57,7 @@ export default function LoginModal() {
 
       // Successful login, redirect to dashboard
       router.push("/dashboard");
+      closeLogin();
     } catch (err) {
       console.error("Login error:", err);
       setMsg("Something went wrong. Please try again.");
@@ -73,7 +74,7 @@ export default function LoginModal() {
   );
   
   const handleForgotPassword = React.useCallback(
-    (e: React.MouseEvent<HTMLAnchorElement>) => {
+    (e: React.MouseEvent) => {
       e.preventDefault();
       closeLogin();
       openForgot();
@@ -144,13 +145,12 @@ export default function LoginModal() {
           </div>
 
           <div>
-          <a
-            href="#"
-            className="text-sm text-blue-600"
+          <p
             onClick={handleForgotPassword}
+            className="text-sm text-blue-600"
           >
             Forgot your password?
-          </a>
+          </p>
 
           </div>
 
@@ -170,13 +170,12 @@ export default function LoginModal() {
 
         <p className="text-center mt-6 text-sm text-black">
           Need an account?{" "}
-          <a
-            href="#"
+          <span
             onClick={handleSignupClick}
             className="text-blue-600 font-medium"
           >
             Sign up
-          </a>
+          </span>
         </p>
       </DialogContent>
     </Dialog>

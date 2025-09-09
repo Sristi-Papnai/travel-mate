@@ -57,6 +57,80 @@
           "name",
           "price"
         ]
+      },
+      "UserRegisterRequest": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "description": "First name of the user"
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Last name of the user"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Email of the user"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 6,
+            "description": "Password for the account"
+          }
+        },
+        "required": [
+          "firstName",
+          "lastName",
+          "email",
+          "password"
+        ]
+      },
+      "UserRegisterResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Status of the response"
+          },
+          "msg": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "User ID"
+              },
+              "firstName": {
+                "type": "string",
+                "description": "First name"
+              },
+              "lastName": {
+                "type": "string",
+                "description": "Last name"
+              },
+              "email": {
+                "type": "string",
+                "description": "Email"
+              }
+            },
+            "required": [
+              "id",
+              "firstName",
+              "lastName",
+              "email"
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "success",
+          "msg"
+        ]
       }
     },
     "responses": {
