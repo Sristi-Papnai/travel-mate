@@ -20,6 +20,8 @@
       }
     },
     "schemas": {
+      "NewsletterParams": {},
+      "NewsletterResponse": {},
       "OpenApiParams": {
         "type": "object",
         "properties": {
@@ -181,13 +183,39 @@
     }
   },
   "paths": {
-    "/forgot-password": {
+    "/auth/forgot-password": {
       "post": {
-        "operationId": "post-forgot-password",
+        "operationId": "post-auth-forgot-password",
         "summary": "(Simplified: In real app, send reset link via email)",
         "description": "",
         "tags": [
-          "Forgot-password"
+          "Auth"
+        ],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "operationId": "post-auth-register",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Auth"
         ],
         "parameters": [],
         "requestBody": {
@@ -210,8 +238,8 @@
     "/newsletter": {
       "post": {
         "operationId": "post-newsletter",
-        "summary": "",
-        "description": "",
+        "summary": "Subscribe to newsletter",
+        "description": "Adds a user to the newsletter subscription list",
         "tags": [
           "Newsletter"
         ],
@@ -224,6 +252,14 @@
           }
         },
         "responses": {
+          "201": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
           "400": {
             "$ref": "#/components/responses/400"
           },
@@ -286,32 +322,6 @@
               }
             }
           },
-          "400": {
-            "$ref": "#/components/responses/400"
-          },
-          "500": {
-            "$ref": "#/components/responses/500"
-          }
-        }
-      }
-    },
-    "/register": {
-      "post": {
-        "operationId": "post-register",
-        "summary": "",
-        "description": "",
-        "tags": [
-          "Register"
-        ],
-        "parameters": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {}
-            }
-          }
-        },
-        "responses": {
           "400": {
             "$ref": "#/components/responses/400"
           },

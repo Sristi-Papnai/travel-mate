@@ -28,8 +28,17 @@ export default function LoginModal() {
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isValid },
   } = useForm<LoginFormInputs>({ mode: "onBlur" });
+
+
+  React.useEffect(() => {
+    if (!isLoginOpen) {
+      reset();
+    }
+  }, [isLoginOpen, reset]);
+
 
   const onSubmit = async (data: LoginFormInputs) => {
     setMsg("");
@@ -54,16 +63,24 @@ export default function LoginModal() {
     }
   };
 
-  const handleSignupClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    closeLogin();
-    openSignup();
-  };
-  const handleForgotPassword = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-    closeLogin();
-    openForgot();
-  };
+  const handleSignupClick = React.useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      closeLogin();
+      openSignup();
+    },
+    [closeLogin, openSignup] // deps
+  );
+  
+  const handleForgotPassword = React.useCallback(
+    (e: React.MouseEvent<HTMLAnchorElement>) => {
+      e.preventDefault();
+      closeLogin();
+      openForgot();
+    },
+    [closeLogin, openForgot] // deps
+  );
+  
   
 
   return (

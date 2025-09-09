@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useState, useCallback, useEffect} from "react";
 import { useDialog } from "@/context/dialog-context";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ interface SignUpFormInputs {
 export default function SignUpModal() {
   const router = useRouter();
   const { isSignupOpen, closeSignup, openLogin } = useDialog();
-  const [msg, setMsg] = React.useState("");
+  const [msg, setMsg] = useState("");
 
   const {
     register,
@@ -43,7 +43,7 @@ export default function SignUpModal() {
   const passwordValue = watch("password");
 
   // reset form when modal opens
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isSignupOpen) {
       reset();
       setMsg("");

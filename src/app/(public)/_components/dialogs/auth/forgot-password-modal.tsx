@@ -37,10 +37,11 @@ export default function ForgotPasswordModal() {
     // TODO: Call forgot password API
   };
 
-  const handleGoBack = () => {
+  const handleGoBack = React.useCallback(() => {
     closeForgot();
     openLogin();
-  };
+  }, [closeForgot, openLogin]);
+  
 
   return (
     <Dialog open={isForgotOpen} onOpenChange={(open) => !open && closeForgot()}>
