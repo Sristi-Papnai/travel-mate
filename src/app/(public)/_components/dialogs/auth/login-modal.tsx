@@ -30,7 +30,7 @@ export default function LoginModal() {
     handleSubmit,
     reset,
     formState: { errors, isValid },
-  } = useForm<LoginFormInputs>({ mode: "onBlur" });
+  } = useForm<LoginFormInputs>({ mode: "onTouched", reValidateMode: "onBlur", });
 
 
   useEffect(() => {

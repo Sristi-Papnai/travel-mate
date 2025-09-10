@@ -6,11 +6,20 @@ import Link from "next/link";
 import { useDialog } from "@/context/dialog-context";
 import { useSession, signOut } from "next-auth/react";
 import { CgProfile } from "react-icons/cg";
+import { useCallback } from "react";
+import { useRouter } from "next/navigation";
 
 
 export default function NavbarButtons() {
   const { openSignup } = useDialog();
   const { data: session } = useSession(); 
+  const router = useRouter();
+
+  const handleLogout = useCallback(async () => {
+    await signOut({ redirect: false });
+    router.push("/"); 
+  }, []); 
+
 
 
   if (session && session.user) {
@@ -26,7 +35,7 @@ export default function NavbarButtons() {
             <Link href="/">Account</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <button onClick={() => signOut()}>Logout</button>
+            <button onClick={handleLogout}>Logout</button>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

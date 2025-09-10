@@ -24,7 +24,7 @@ export default function ForgotPasswordModal() {
     handleSubmit,
     reset,
     formState: { errors, isValid },
-  } = useForm<ForgotFormInputs>({ mode: "onBlur" });
+  } = useForm<ForgotFormInputs>({ mode: "onTouched", reValidateMode: "onBlur", });
 
   useEffect(() => {
     if (!isForgotOpen) {

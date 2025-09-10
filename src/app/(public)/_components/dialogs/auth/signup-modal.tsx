@@ -35,7 +35,7 @@ export default function SignUpModal() {
     reset,
     formState: { errors, isValid },
   } = useForm<SignUpFormInputs>({
-    mode: "onBlur",
+    mode: "onTouched",
     reValidateMode: "onBlur",
   });
 
