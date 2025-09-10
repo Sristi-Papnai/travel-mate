@@ -40,6 +40,7 @@
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.10.0",
+    "@getbrevo/brevo": "^3.0.1",
     "@hookform/resolvers": "^5.2.1",
     "@next/bundle-analyzer": "^15.5.0",
     "@next/third-parties": "^15.5.0",

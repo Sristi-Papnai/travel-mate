@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback} from "react";
+import { useEffect, useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useDialog } from "@/context/dialog-context";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,9 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import type { ForgotPasswordResponse } from "@/interfaces/openapi";
+import { forgotPassword } from "@/app/services/api/authApi";
+import { sendEmail } from "@/app/services/api/mailApi";
 
 interface ForgotFormInputs {
   email: string;
@@ -18,6 +21,8 @@ interface ForgotFormInputs {
 
 export default function ForgotPasswordModal() {
   const { isForgotOpen, closeForgot, openLogin } = useDialog();
+  const [msg, setMsg] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
 
   const {
     register,
@@ -29,19 +34,60 @@ export default function ForgotPasswordModal() {
   useEffect(() => {
     if (!isForgotOpen) {
       reset();
+      setMsg("");
+      setErrorMsg("");
     }
   }, [isForgotOpen]);
 
-  const onSubmit = () => {
-    // console.log("Password reset requested for:", data);
-    // TODO: Call forgot password API
+  const onSubmit = async (data: ForgotFormInputs) => {
+    setMsg("");
+    setErrorMsg("");
+  
+    try {
+      const result: ForgotPasswordResponse = await forgotPassword({ email: data.email });
+  
+      if (result.error) {
+        setErrorMsg("Please enter registered mail");
+        setMsg("");
+        console.log("Forgot password error:", result.errors);
+        return;
+      }
+  
+      console.log("Magic token generated:", result.data);
+  
+    try {
+      await sendEmail({
+        to: data.email,
+        subject: "Reset Your Password",
+        htmlContent: `
+          <h1>Hello!</h1>
+          <p>
+            Click the link below to reset your password:
+            <br />
+            <a href="${process.env.NEXT_PUBLIC_APP_URL}/changepassword/${result.data?.magicToken}">
+              ${process.env.NEXT_PUBLIC_APP_URL}/changepassword/${result.data?.magicToken}
+            </a>
+          </p>
+        `,
+      });
+    } catch (mailErr) {
+      console.log("Failed to send reset email:", mailErr);
+    }
+      setMsg(`Please check Your Email - ${data.email} for reset password link`);
+      // reset();
+      // closeForgot();
+      // openLogin();
+    } catch (err) {
+      console.log("Unexpected forgot password error:", err);
+      setErrorMsg("Unexpected error. Please try again.");
+      setMsg("");
+    }
   };
-
+  
   const handleGoBack = useCallback(() => {
     closeForgot();
     openLogin();
-  }, [closeForgot, openLogin]);
-  
+  }, []);
 
   return (
     <Dialog open={isForgotOpen} onOpenChange={(open) => !open && closeForgot()}>
@@ -57,6 +103,15 @@ export default function ForgotPasswordModal() {
             Forgot password form modal
           </DialogDescription>
         </DialogHeader>
+
+        {/* Error message */}
+        {errorMsg && (
+          <p className="text-red-500 text-sm mb-4 text-center">{errorMsg}</p>
+        )}
+        {/* Success message */}
+        {msg && (
+          <p className="text-green-500 text-sm mb-4 text-center">{msg}</p>
+        )}
 
         <p className="mb-6 text-gray-700">
           Enter your email address to reset your password.

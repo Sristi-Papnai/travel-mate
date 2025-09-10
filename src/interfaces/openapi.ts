@@ -68,4 +68,61 @@ export interface IRegisterPayload {
   email: string;
   password: string;
 }
+export interface IForgotPasswordData {
+  id: number;
+  email: string;
+  magicToken: string;
+  tokenExpiryDate: string; // or Date if you want to parse it
+}
+
+export type ForgotPasswordResponse = IStandardResponse<IForgotPasswordData>;
+
+
+/**
+ * Request payload
+ */
+export interface IForgotPasswordPayload {
+  email: string;
+}
+
+export interface ISendEmailPayload {
+  to: string;
+  subject: string;
+  htmlContent: string;
+}
+
+/**
+ * Response type from the email API
+ */
+export interface ISendEmailResponse {
+  success?: boolean;
+  messageId?: string;
+  error?: string;
+}
+
+export interface IValidateTokenPayload {
+  token: string;
+}
+export interface ValidateTokenResponse {
+  userId?: string;
+}
+
+/**
+ * Response type for password reset.
+ */
+export interface ResetPasswordResponse {
+  success: boolean;
+  message?: string;
+}
+
+export interface ResetPasswordPayload {
+  token: string;
+  password: string;
+}
+
+export interface ResetPasswordResponse {
+  error: boolean;
+  msg: string;
+  errors: Record<string, string>;
+}
 

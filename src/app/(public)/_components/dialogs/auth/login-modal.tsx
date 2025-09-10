@@ -70,7 +70,7 @@ export default function LoginModal() {
       closeLogin();
       openSignup();
     },
-    [closeLogin, openSignup] // deps
+    [] // deps
   );
   
   const handleForgotPassword = useCallback(
@@ -79,7 +79,7 @@ export default function LoginModal() {
       closeLogin();
       openForgot();
     },
-    [closeLogin, openForgot] // deps
+    [] // deps
   );
   
   

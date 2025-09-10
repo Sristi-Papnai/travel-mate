@@ -1,8 +1,18 @@
 import { db, schema } from "@/db/client";
-import { eq } from "drizzle-orm";
+import { and, eq, gt } from "drizzle-orm";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
+
 
 const { users } = schema;
+
+export interface ITokenRecord {
+  id: number;
+  magicToken: string | null;
+  tokenExpiryDate: Date | null;
+  email: string;
+}
+
 
 /**
  * Find user by email
@@ -91,4 +101,56 @@ export async function deleteUser(id: number) {
     .returning();
 
   return deletedUser;
+}
+
+/**
+ * Create and store a magic token with 10-minute expiry for a user by email
+ */
+export async function createMagicTokenForUser(email: string) {
+  const magicToken = crypto.randomBytes(32).toString("hex");
+  const tokenExpiryDate = new Date(Date.now() + 10 * 60 * 1000); 
+
+  const [updatedUser] = await db
+    .update(users)
+    .set({
+      magicToken,
+      tokenExpiryDate,
+    })
+    .where(eq(users.email, email))
+    .returning({
+      id: users.id,
+      email: users.email,
+      magicToken: users.magicToken,
+      tokenExpiryDate: users.tokenExpiryDate,
+    });
+
+  return updatedUser ?? null;
+}
+
+
+/**
+ * Find user by magic token if it exists and is not expired.
+ * @param token - The magic token to validate
+ * @returns The user record or null if not found/expired
+ */
+export async function findUserByValidToken(token: string): Promise<ITokenRecord | null> {
+  const now = new Date();
+
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(and(
+      eq(users.magicToken, token),
+      gt(users.tokenExpiryDate, now)
+    ))
+    .limit(1);
+
+  return user ?? null;
+}
+
+export async function updateUserPassword(userId: number, passwordHash: string): Promise<void> {
+  await db
+    .update(users)
+    .set({ password: passwordHash, magicToken: null, tokenExpiryDate: null })
+    .where(eq(users.id, userId));
 }

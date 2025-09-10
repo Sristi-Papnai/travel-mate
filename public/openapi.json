@@ -260,7 +260,7 @@
     "/auth/forgot-password": {
       "post": {
         "operationId": "post-auth-forgot-password",
-        "summary": "(Simplified: In real app, send reset link via email)",
+        "summary": "",
         "description": "",
         "tags": [
           "Auth"
@@ -287,6 +287,58 @@
       "post": {
         "operationId": "post-auth-register",
         "summary": "",
+        "description": "",
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/auth/reset-password": {
+      "post": {
+        "operationId": "post-auth-reset-password",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/auth/validate-token": {
+      "post": {
+        "operationId": "post-auth-validate-token",
+        "summary": "POST /auth/validate-token",
         "description": "",
         "tags": [
           "Auth"
@@ -396,6 +448,32 @@
               }
             }
           },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/send-email": {
+      "post": {
+        "operationId": "post-send-email",
+        "summary": "POST /api/send-email",
+        "description": "",
+        "tags": [
+          "Send-email"
+        ],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "responses": {
           "400": {
             "$ref": "#/components/responses/400"
           },

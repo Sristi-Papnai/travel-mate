@@ -56,7 +56,7 @@ export default function SignUpModal() {
       closeSignup();
       openLogin();
     },
-    [closeSignup, openLogin]
+    []
   );
 
 
