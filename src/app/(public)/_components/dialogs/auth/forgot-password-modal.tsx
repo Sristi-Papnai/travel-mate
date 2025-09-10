@@ -49,11 +49,10 @@ export default function ForgotPasswordModal() {
       if (result.error) {
         setErrorMsg("Please enter registered mail");
         setMsg("");
-        console.log("Forgot password error:", result.errors);
+
         return;
       }
   
-      console.log("Magic token generated:", result.data);
   
     try {
       await sendEmail({
@@ -71,15 +70,15 @@ export default function ForgotPasswordModal() {
         `,
       });
     } catch (mailErr) {
-      console.log("Failed to send reset email:", mailErr);
+      setErrorMsg(`Unexpected error. Please try again.${mailErr}`);
+
     }
       setMsg(`Please check Your Email - ${data.email} for reset password link`);
       // reset();
       // closeForgot();
       // openLogin();
     } catch (err) {
-      console.log("Unexpected forgot password error:", err);
-      setErrorMsg("Unexpected error. Please try again.");
+      setErrorMsg(`Unexpected error. Please try again.${err}`);
       setMsg("");
     }
   };

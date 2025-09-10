@@ -4,11 +4,11 @@ import { validateToken } from "@/app/services/api/authApi";
 import { notFound } from "next/navigation";
 
 interface PageProps {
-  params: { token: string };
+  params: Promise<{ token: string }>;
 }
 
 export default async function ChangePasswordPage({ params }: PageProps) {
-  const { token } = params;
+  const { token } = await params;
 
   // Call API with absolute URL
   const result = await validateToken({ token });
