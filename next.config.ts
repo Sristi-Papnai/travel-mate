@@ -1,8 +1,8 @@
 import type { NextConfig } from "next";
 
 import withBundleAnalyzer from "@next/bundle-analyzer";
-import { withPostHogConfig } from "@posthog/nextjs-config";
-import { withSentryConfig } from "@sentry/nextjs";
+// import { withPostHogConfig } from "@posthog/nextjs-config";
+// import { withSentryConfig } from "@sentry/nextjs";
 import { env } from "env";
 
 const nextConfig: NextConfig = {
@@ -14,7 +14,16 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["import-in-the-middle", "require-in-the-middle"], // posthog config
   images: {
     formats: ["image/avif", "image/webp"],
-    remotePatterns: [],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'imgs.search.brave.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.google.com', // covers other google subdomains
+      },
+    ],
   },
   async rewrites() {
     return [
@@ -85,33 +94,33 @@ const nextConfig: NextConfig = {
   },
 };
 
-const withPostHog = withPostHogConfig(nextConfig, {
-  personalApiKey: env.POSTHOG_API_KEY, // Personal API Key
-  envId: env.POSTHOG_ENV_ID, // Environment ID
-  host: env.NEXT_PUBLIC_POSTHOG_HOST, // (optional), defaults to https://us.posthog.com
-});
+// const withPostHog = withPostHogConfig(nextConfig, {
+//   personalApiKey: env.POSTHOG_API_KEY, // Personal API Key
+//   envId: env.POSTHOG_ENV_ID, // Environment ID
+//   host: env.NEXT_PUBLIC_POSTHOG_HOST, // (optional), defaults to https://us.posthog.com
+// });
 
-const withSentry = withSentryConfig(withPostHog, {
-  org: "test-organisation-qk",
-  project: "create-next-coe",
-  silent: !process.env.CI,
-  widenClientFileUpload: true,
-  tunnelRoute: "/monitoring", // ?!monitoring in next.config.ts when using middleware.ts file
-  disableLogger: true,
-  automaticVercelMonitors: true,
-  authToken: env.SENTRY_AUTH_TOKEN,
-  sourcemaps: {
-    deleteSourcemapsAfterUpload: false,
-  },
-  reactComponentAnnotation: {
-    enabled: true,
-  },
-});
+// const withSentry = withSentryConfig(withPostHog, {
+//   org: "test-organisation-qk",
+//   project: "create-next-coe",
+//   silent: !process.env.CI,
+//   widenClientFileUpload: true,
+//   tunnelRoute: "/monitoring", // ?!monitoring in next.config.ts when using middleware.ts file
+//   disableLogger: true,
+//   automaticVercelMonitors: true,
+//   authToken: env.SENTRY_AUTH_TOKEN,
+//   sourcemaps: {
+//     deleteSourcemapsAfterUpload: false,
+//   },
+//   reactComponentAnnotation: {
+//     enabled: true,
+//   },
+// });
 
 export default withBundleAnalyzer({
   enabled: env.ANALYZE === "true",
 })(
   env.NEXT_PUBLIC_APP_ENV === "production" || env.NEXT_PUBLIC_APP_ENV === "staging"
-    ? withSentry
+    ? nextConfig
     : nextConfig,
 );

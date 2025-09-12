@@ -1,6 +1,6 @@
 {
-  "id": "61d1b7bb-b5e7-4e2d-95be-27d388cfe845",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "df86ab3a-9de4-4a6c-8260-5cdf7e3cd910",
+  "prevId": "61d1b7bb-b5e7-4e2d-95be-27d388cfe845",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -77,6 +77,18 @@
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
+        },
+        "magic_token": {
+          "name": "magic_token",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "token_expiry_date": {
+          "name": "token_expiry_date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",

@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import NextError from "next/error";
 
 import * as Sentry from "@sentry/nextjs";
-import { env } from "env";
+// import { env } from "env";
 import posthog from "posthog-js";
 
 export default function GlobalError({ error }: { error: Error & { digest?: string } }) {
@@ -13,7 +13,7 @@ export default function GlobalError({ error }: { error: Error & { digest?: strin
     console.error("global-error", error);
     Sentry.captureException(error);
     posthog.captureException(error, {
-      environment: env.NEXT_PUBLIC_POSTHOG_ENVIRONMENT,
+      // environment: env.NEXT_PUBLIC_POSTHOG_ENVIRONMENT,
     });
   }, [error]);
 

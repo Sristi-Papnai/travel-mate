@@ -1,4 +1,5 @@
 import z from "zod";
+import type { IStandardResponse } from "@/db/types";
 
 export const OpenApiParams = z.object({
   id: z.string().describe("OpenApi ID"),
@@ -9,3 +10,62 @@ export const OpenApiResponse = z.object({
   name: z.string().describe("OpenApi name"),
   price: z.number().positive().describe("OpenApi price"),
 });
+
+
+
+/**
+ * User registration request payload
+ */
+export interface IUserRegisterRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+}
+
+/**
+ * User registration response (extends standard API response)
+ */
+export type IUserRegisterResponse = IStandardResponse;
+
+/**
+ * Newsletter request payload
+ */
+export interface INewsletterRequest {
+  email: string;
+}
+
+/**
+ * Newsletter response (extends standard API response)
+ */
+export type INewsletterResponse = IStandardResponse;
+
+// ---------------- Zod Schemas (optional, for validation or OpenAPI generation) ----------------
+
+export const UserRegisterRequest = z.object({
+  firstName: z.string().describe("First name of the user"),
+  lastName: z.string().describe("Last name of the user"),
+  email: z.string().email().describe("Email of the user"),
+  password: z.string().min(6).describe("Password for the account"),
+});
+
+export const UserRegisterResponse = z.object({
+  success: z.boolean().describe("Status of the response"),
+  msg: z.string().describe("Response message"),
+  data: z
+    .object({
+      id: z.string().describe("User ID"),
+      firstName: z.string().describe("First name"),
+      lastName: z.string().describe("Last name"),
+      email: z.string().describe("Email"),
+    })
+    .optional(),
+});
+
+export interface IRegisterPayload {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+}
+
