@@ -2,6 +2,7 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import {
+  createGoogleUser,
   validateUserCredentials,
 } from "@/db/services/users";
 
@@ -38,6 +39,23 @@ export const authOptions: NextAuthOptions = {
   ],
   session: { strategy: "jwt" },
   callbacks: {
+    async signIn({ user, account }) {
+      if (account?.provider === "google" && user.email) {
+        const [firstName, ...rest] = (user.name || "").split(" ");
+        const lastName = rest.join(" ") || "";
+  
+        // Create or fetch user in DB
+        const dbUser = await createGoogleUser({
+          firstName,
+          lastName,
+          email: user.email,
+        });
+  
+        // Attach DB user id so jwt can use it
+        user.id = dbUser.id.toString();
+      }
+      return true;
+    },
     jwt({ token, user }) {
       if (user) token.user = user;
       return token;

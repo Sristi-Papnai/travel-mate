@@ -15,6 +15,20 @@
       "when": 1757413529549,
       "tag": "0001_flowery_gabe_jones",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1757836493844,
+      "tag": "0002_yummy_mystique",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1757836555417,
+      "tag": "0003_eminent_ink",
+      "breakpoints": true
     }
   ]
 }
