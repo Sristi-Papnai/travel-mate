@@ -8,9 +8,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import NavbarButtons from "./navbar-buttons"; 
 import { IoMdArrowDropdown } from "react-icons/io";
+import { authOptions } from "@/app/_libs/utils/auth"; 
+import { getServerSession } from "next-auth";
 
 
-export default function Navbar() {
+export default async function Navbar() {
+  const session = await getServerSession(authOptions);
   return (
     <nav className="flex justify-between fixed top-0 w-full z-50 items-center px-6 bg-black shadow-md">
       {/* Logo Section */}
@@ -49,7 +52,7 @@ export default function Navbar() {
         </DropdownMenu>
 
         {/* Client Buttons */}
-        <NavbarButtons />
+        <NavbarButtons session={session}/>
       </div>
     </nav>
   );

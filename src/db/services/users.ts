@@ -56,6 +56,41 @@ export async function createUser({
   return newUser;
 }
 
+
+export async function createGoogleUser({
+  firstName,
+  lastName,
+  email,
+}: {
+  firstName: string;
+  lastName: string;
+  email: string;
+}) {
+  // check if user already exists
+  const existingUser = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, email));
+
+  if (existingUser.length > 0) {
+    return existingUser[0];
+  }
+
+  // insert new Google user
+  const [newUser] = await db
+    .insert(users)
+    .values({
+      firstName,
+      lastName,
+      email,
+      password: null, 
+      provider: "google", 
+    })
+    .returning();
+
+  return newUser;
+}
+
 /**
  * Validate user credentials
  */

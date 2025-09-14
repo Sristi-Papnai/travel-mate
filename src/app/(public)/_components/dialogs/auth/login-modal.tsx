@@ -30,7 +30,7 @@ export default function LoginModal() {
     handleSubmit,
     reset,
     formState: { errors, isValid },
-  } = useForm<LoginFormInputs>({ mode: "onTouched", reValidateMode: "onBlur", });
+  } = useForm<LoginFormInputs>({ mode: "onTouched" });
 
 
   useEffect(() => {
@@ -81,7 +81,14 @@ export default function LoginModal() {
     },
     [] // deps
   );
-  
+
+  const handleGoogleLogin = useCallback(async () => {
+    try {
+      await signIn("google", { callbackUrl: "/dashboard" });
+    } catch (err) {
+      console.error("Google login error:", err);
+    }
+  }, []);
   
 
   return (
@@ -167,6 +174,22 @@ export default function LoginModal() {
             Log in
           </Button>
         </form>
+
+         {/* OR divider */}
+         <div className="flex items-center my-6">
+          <div className="flex-grow border-t border-gray-300"></div>
+          <span className="mx-3 text-sm text-gray-500">OR</span>
+          <div className="flex-grow border-t border-gray-300"></div>
+        </div>
+
+        {/* Google Login Button */}
+        <Button
+          type="button"
+          onClick={handleGoogleLogin}
+          className="w-full py-3 mt-3 rounded-lg bg-red-500 text-white hover:bg-red-600"
+        >
+          Continue with Google
+        </Button>
 
         <p className="text-center mt-6 text-sm text-black">
           Need an account?{" "}
