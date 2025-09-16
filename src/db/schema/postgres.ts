@@ -5,10 +5,11 @@ export const users = pgTable("users", {
   firstName: varchar("first_name", { length: 255 }).notNull(),
   lastName: varchar("last_name", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }).unique().notNull(),
-  password: varchar("password", { length: 255 }).notNull(),
+  password: varchar("password", { length: 255 }),
   magicToken: varchar("magic_token", { length: 255 }),
   tokenExpiryDate: timestamp("token_expiry_date"),     
   createdAt: timestamp("created_at").defaultNow(),
+  provider: varchar("provider").default("credentials").notNull(), 
 });
 
 
