@@ -338,7 +338,7 @@
     "/auth/validate-token": {
       "post": {
         "operationId": "post-auth-validate-token",
-        "summary": "",
+        "summary": "POST /auth/validate-token",
         "description": "",
         "tags": [
           "Auth"

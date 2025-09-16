@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { registerUser } from "@/app/services/api/authApi";
 import { useRouter } from "next/navigation";
+import DialogLoader from "@/app/_components/layout/dialog-loader";
 
 interface SignUpFormInputs {
   firstName: string;
@@ -27,6 +28,7 @@ export default function SignUpModal() {
   const router = useRouter();
   const { isSignupOpen, closeSignup, openLogin } = useDialog();
   const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const {
     register,
@@ -46,6 +48,7 @@ export default function SignUpModal() {
     if (!isSignupOpen) {
       reset();
       setMsg("");
+      setLoading(false);
     }
   }, [isSignupOpen]);
 
@@ -62,6 +65,7 @@ export default function SignUpModal() {
 
   const onSubmit = async (data: SignUpFormInputs) => {
     setMsg("");
+    setLoading(true); 
   
     try {
       const { res, result } = await registerUser({
@@ -78,6 +82,7 @@ export default function SignUpModal() {
           result.msg ||
           "Signup failed";
         setMsg(errorMessage);
+        setLoading(false); 
         return;
       }
   
@@ -86,6 +91,8 @@ export default function SignUpModal() {
     } catch (err) {
       console.error("Signup error:", err);
       setMsg("Something went wrong. Please try again.");
+    }finally {
+      setLoading(false); 
     }
   };
   
@@ -104,6 +111,12 @@ export default function SignUpModal() {
             Signup form modal
           </DialogDescription>
         </DialogHeader>
+        {msg && (
+            <p className="text-center text-sm mt-2 text-red-500">{msg}</p>
+          )}
+
+        {/* Loader overlay */}
+        {loading && <DialogLoader />}
 
         <form className="space-y-4 text-black" onSubmit={handleSubmit(onSubmit)}>
           <div className="flex gap-4">
@@ -212,9 +225,7 @@ export default function SignUpModal() {
             <p className="text-red-500 text-sm mt-1">{errors.agree.message}</p>
           )}
 
-          {msg && (
-            <p className="text-center text-sm mt-2 text-red-500">{msg}</p>
-          )}
+          
 
           <Button
             variant="default"
@@ -223,7 +234,7 @@ export default function SignUpModal() {
                 ? "bg-blue-500 hover:bg-blue-600 cursor-pointer"
                 : "bg-gray-200 text-gray-500 cursor-not-allowed"
             }`}
-            disabled={!isValid}
+            disabled={!isValid || loading} 
           >
             Create account
           </Button>

@@ -15,7 +15,7 @@ import { getServerSession } from "next-auth";
 export default async function Navbar() {
   const session = await getServerSession(authOptions);
   return (
-    <nav className="flex justify-between fixed top-0 w-full z-50 items-center px-6 bg-black shadow-md">
+    <nav className="flex justify-between sticky top-0 w-full z-50 items-center px-6 bg-black shadow-md">
       {/* Logo Section */}
       <div className="flex items-center">
         <Image src="/images/logo.png" alt="Logo" width={100} height={40} />

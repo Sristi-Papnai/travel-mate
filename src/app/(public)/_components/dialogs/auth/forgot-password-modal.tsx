@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import type { ForgotPasswordResponse } from "@/interfaces/openapi";
 import { forgotPassword } from "@/app/services/api/authApi";
+import DialogLoader from "@/app/_components/layout/dialog-loader";
 
 interface ForgotFormInputs {
   email: string;
@@ -22,6 +23,7 @@ export default function ForgotPasswordModal() {
   const { isForgotOpen, closeForgot, openLogin } = useDialog();
   const [msg, setMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const {
     register,
@@ -35,27 +37,30 @@ export default function ForgotPasswordModal() {
       reset();
       setMsg("");
       setErrorMsg("");
+      setLoading(false);
     }
   }, [isForgotOpen]);
 
   const onSubmit = async (data: ForgotFormInputs) => {
     setMsg("");
     setErrorMsg("");
-  
+    setLoading(true); 
     try {
       const result: ForgotPasswordResponse = await forgotPassword({ email: data.email });
   
       if (result.error) {
-        setErrorMsg("Please enter registered mail");
+        setErrorMsg("Please enter registered email");
         setMsg("");
-
+        setLoading(false); 
         return;
       }
   
-      setMsg(`Please check Your Email - ${data.email} for reset password link`);
+      setMsg(`Please check your email - ${data.email} for the reset password link`);
     } catch (err) {
       setErrorMsg(`Unexpected error. Please try again.${err}`);
       setMsg("");
+    } finally {
+      setLoading(false); 
     }
   };
   
@@ -78,6 +83,9 @@ export default function ForgotPasswordModal() {
             Forgot password form modal
           </DialogDescription>
         </DialogHeader>
+
+        {/* Loader overlay */}
+        {loading && <DialogLoader />}
 
         {/* Error message */}
         {errorMsg && (
@@ -118,7 +126,7 @@ export default function ForgotPasswordModal() {
           {/* Reset Password */}
           <Button
             type="submit"
-            disabled={!isValid}
+            disabled={!isValid || loading} 
             variant="default"
             className={`w-full py-3 rounded-lg ${
               isValid

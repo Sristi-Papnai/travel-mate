@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, type MouseEvent} from "react";
+import { useState, useEffect, useCallback, type MouseEvent } from "react";
 import { useDialog } from "@/context/dialog-context";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
+import DialogLoader from "@/app/_components/layout/dialog-loader";
 
 interface LoginFormInputs {
   email: string;
@@ -23,7 +24,7 @@ export default function LoginModal() {
   const router = useRouter();
   const { isLoginOpen, closeLogin, openSignup, openForgot } = useDialog();
   const [msg, setMsg] = useState("");
-
+  const [loading, setLoading] = useState(false);
 
   const {
     register,
@@ -36,12 +37,15 @@ export default function LoginModal() {
   useEffect(() => {
     if (!isLoginOpen) {
       reset();
+      setLoading(false);
+      setMsg("");
     }
   }, [isLoginOpen]);
 
 
   const onSubmit = async (data: LoginFormInputs) => {
     setMsg("");
+    setLoading(true);
 
     try {
       const result = await signIn("credentials", {
@@ -52,6 +56,7 @@ export default function LoginModal() {
 
       if (result?.error) {
         setMsg("Invalid Credentials");
+        setLoading(false);
         return;
       }
 
@@ -61,6 +66,7 @@ export default function LoginModal() {
     } catch (err) {
       console.error("Login error:", err);
       setMsg("Something went wrong. Please try again.");
+      setLoading(false);
     }
   };
 
@@ -84,9 +90,11 @@ export default function LoginModal() {
 
   const handleGoogleLogin = useCallback(async () => {
     try {
+      setLoading(true);
       await signIn("google", { callbackUrl: "/dashboard" });
     } catch (err) {
       console.error("Google login error:", err);
+      setLoading(false);
     }
   }, []);
   
@@ -106,6 +114,8 @@ export default function LoginModal() {
         {msg && (
           <p className="text-red-500 text-sm mb-4 text-center">{msg}</p>
         )}
+         {/* Loader overlay */}
+         {loading && <DialogLoader />}
 
         <form className="space-y-4 text-black" onSubmit={handleSubmit(onSubmit)}>
           <div>
@@ -152,12 +162,12 @@ export default function LoginModal() {
           </div>
 
           <div>
-          <p
+          <span
             onClick={handleForgotPassword}
-            className="text-sm text-blue-600"
+            className="text-sm text-blue-600 cursor-pointer"
           >
             Forgot your password?
-          </p>
+          </span>
 
           </div>
 
@@ -169,7 +179,7 @@ export default function LoginModal() {
                 ? "bg-blue-500 hover:bg-blue-600 cursor-pointer"
                 : "bg-gray-200 text-gray-500 cursor-not-allowed"
             }`}
-            disabled={!isValid}
+            disabled={!isValid || loading}
           >
             Log in
           </Button>
@@ -186,7 +196,8 @@ export default function LoginModal() {
         <Button
           type="button"
           onClick={handleGoogleLogin}
-          className="w-full py-3 mt-3 rounded-lg bg-red-500 text-white hover:bg-red-600"
+          disabled={loading}
+          className="w-full py-3 rounded-lg bg-red-500 text-white hover:bg-red-600"
         >
           Continue with Google
         </Button>
@@ -195,7 +206,7 @@ export default function LoginModal() {
           Need an account?{" "}
           <span
             onClick={handleSignupClick}
-            className="text-blue-600 font-medium"
+            className="text-blue-600 font-medium cursor-pointer"
           >
             Sign up
           </span>

@@ -29,7 +29,7 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className={`${geologica.variable} font-sans antialiased`}>
         <AuthProvider>
-          <DialogProvider>/
+          <DialogProvider>
               <Navbar />
               {children}
               <LoginModal /> 
