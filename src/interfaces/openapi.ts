@@ -88,41 +88,40 @@ export interface IForgotPasswordPayload {
 export interface ISendEmailPayload {
   to: string;
   subject: string;
-  htmlContent: string;
+  htmlContent?: string;
+  textContent?: string;
 }
 
 /**
  * Response type from the email API
  */
 export interface ISendEmailResponse {
-  success?: boolean;
+  success: boolean;
   messageId?: string;
   error?: string;
 }
 
 export interface IValidateTokenPayload {
-  token: string;
+  token: string | undefined;
 }
-export interface ValidateTokenResponse {
-  userId?: string;
+export interface ValidateTokenResponseData {
+  id?: number;
 }
+export type ValidateTokenResponse = IStandardResponse<ValidateTokenResponseData>;
 
 /**
  * Response type for password reset.
  */
-export interface ResetPasswordResponse {
-  success: boolean;
-  message?: string;
+export interface ResetPasswordResponseData {
+  id?: number;
 }
 
+export type ResetPasswordResponse = IStandardResponse<ResetPasswordResponseData>;
+
+
 export interface ResetPasswordPayload {
-  token: string;
+  token: string | undefined;
   password: string;
 }
 
-export interface ResetPasswordResponse {
-  error: boolean;
-  msg: string;
-  errors: Record<string, string>;
-}
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { findUserByEmail, createMagicTokenForUser } from "@/db/services/users";
 import { getErrorResponse, getSuccessResponse } from "@/db/utils/response";
+import { sendEmail } from "@/app/services/mail/send-mail";
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,13 +32,34 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // send email
+
+    const mail = await sendEmail({
+      to: email,
+      subject: "Reset Your Password",
+      htmlContent: `
+        <h1>Hello!</h1>
+        <p>
+        Click this
+          <a href="${process.env.NEXT_PUBLIC_APP_URL}/reset?token=${updatedUser.magicToken}">
+          link
+          </a> to reset your password:
+        </p>
+      `,
+    });
+
+    if(!mail.success){
+      return NextResponse.json(
+        getErrorResponse({ mail: "Failed to send mail" }),
+        { status: 500 }
+      );
+    }
+
+
     // Return success with token details (don’t expose token in prod if sending via email)
     return NextResponse.json(
-      getSuccessResponse("Magic token generated", {
-        id: updatedUser.id,
+      getSuccessResponse("Mail sent successfully", {
         email: updatedUser.email,
-        magicToken: updatedUser.magicToken,
-        tokenExpiryDate: updatedUser.tokenExpiryDate,
       }),
       { status: 200 }
     );

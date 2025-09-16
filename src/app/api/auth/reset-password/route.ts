@@ -1,8 +1,9 @@
 // app/api/auth/reset-password/route.ts
 import { findUserByValidToken, updateUserPassword } from "@/db/services/users";
 import type { IStandardResponse } from "@/db/types";
-import type { NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import bcrypt from "bcrypt";
+import { getErrorResponse, getSuccessResponse } from "@/db/utils/response";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
@@ -17,17 +18,19 @@ export async function POST(req: NextRequest) {
 
   if (!token || !password) {
     response.msg = "Token and password are required";
-    if (!token) response.errors.token = "Token is missing";
-    if (!password) response.errors.password = "Password is missing";
-    return new Response(JSON.stringify(response), { status: 400 });
+    return NextResponse.json(
+      getErrorResponse({ mail: "Token and password are required" }),
+      { status: 404 }
+    );
   }
 
   const user = await findUserByValidToken(token);
 
   if (!user) {
-    response.msg = "Invalid or expired token";
-    response.errors.token = "Token not found or expired";
-    return new Response(JSON.stringify(response), { status: 404 });
+    return NextResponse.json(
+      getErrorResponse({ mail: "Invalid or expired token" }),
+      { status: 404 }
+    );
   }
 
   // Hash password
@@ -39,5 +42,10 @@ export async function POST(req: NextRequest) {
   response.error = false;
   response.msg = "Password reset successfully";
 
-  return new Response(JSON.stringify(response), { status: 200 });
+  return NextResponse.json(
+    getSuccessResponse("Mail sent successfully", {
+      userId: user.id,
+    }),
+    { status: 200 }
+  );
 }

@@ -11,6 +11,8 @@ export interface ITokenRecord {
   magicToken: string | null;
   tokenExpiryDate: Date | null;
   email: string;
+  firstName: string;
+  lastName: string;
 }
 
 

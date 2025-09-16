@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createUser, findUserByEmail } from "@/db/services/users";
 import { getErrorResponse, getSuccessResponse } from "@/db/utils/response";
 import { encode } from "next-auth/jwt";
+import { sendEmail } from "@/app/services/mail/send-mail";
 
 const SESSION_COOKIE_NAME = process.env.NODE_ENV === "production"
   ? "__Secure-next-auth.session-token"
@@ -71,6 +72,22 @@ export async function POST(req: NextRequest) {
       secure: process.env.NODE_ENV === "production",
       maxAge,
     });
+
+     // send email
+     const mail = await sendEmail({
+      to: newUser.email,
+      subject: "Reset Your Password",
+      htmlContent: `
+        <h1>Hello! ${newUser.firstName}</h1>
+        <p>
+        Welcome to Travel Mate!
+        </p>
+      `,
+    });
+
+    if(!mail.success){
+      console.error("failed to send welcom mail")
+    }
 
     return res;
   } catch (error) {

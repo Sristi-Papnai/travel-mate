@@ -338,7 +338,7 @@
     "/auth/validate-token": {
       "post": {
         "operationId": "post-auth-validate-token",
-        "summary": "POST /auth/validate-token",
+        "summary": "",
         "description": "",
         "tags": [
           "Auth"
@@ -448,32 +448,6 @@
               }
             }
           },
-          "400": {
-            "$ref": "#/components/responses/400"
-          },
-          "500": {
-            "$ref": "#/components/responses/500"
-          }
-        }
-      }
-    },
-    "/send-email": {
-      "post": {
-        "operationId": "post-send-email",
-        "summary": "POST /api/send-email",
-        "description": "",
-        "tags": [
-          "Send-email"
-        ],
-        "parameters": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {}
-            }
-          }
-        },
-        "responses": {
           "400": {
             "$ref": "#/components/responses/400"
           },

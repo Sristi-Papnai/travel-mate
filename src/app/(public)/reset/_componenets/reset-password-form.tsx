@@ -12,10 +12,10 @@ interface FormInputs {
 }
 
 interface Props {
-  token: string;
+  token: string | undefined;
 }
 
-export default function ChangePasswordForm({ token }: Props) {
+export default function ResetPasswordForm({ token }: Props) {
   const router = useRouter();
   const [error, setError] = useState("");
 

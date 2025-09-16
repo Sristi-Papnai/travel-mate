@@ -1,6 +1,7 @@
 import { findUserByValidToken } from "@/db/services/users";
 import type { IStandardResponse } from "@/db/types";
-import type { NextRequest } from "next/server";
+import { getErrorResponse, getSuccessResponse } from "@/db/utils/response";
+import { NextResponse, type NextRequest } from "next/server";
 
 /**
  * POST /auth/validate-token
@@ -17,9 +18,10 @@ export async function POST(req: NextRequest) {
   };
 
   if (!token) {
-    response.msg = "Token is required";
-    response.errors = { token: "Token cannot be empty" };
-    return new Response(JSON.stringify(response), { status: 400 });
+    return NextResponse.json(
+      getErrorResponse({ mail: "Token cannot be empty" }),
+      { status: 400 }
+    );
   }
 
   const user = await findUserByValidToken(token);
@@ -27,12 +29,20 @@ export async function POST(req: NextRequest) {
   if (!user) {
     response.msg = "Invalid or expired token";
     response.errors = { token: "Token not found or expired" };
-    return new Response(JSON.stringify(response), { status: 404 });
+    return NextResponse.json(
+      getErrorResponse({ mail: "Token not found or expired" }),
+      { status: 404 }
+    );
   }
 
   response.error = false;
   response.msg = "Token is valid";
   response.data = { userId: user.id };
 
-  return new Response(JSON.stringify(response), { status: 200 });
+  return NextResponse.json(
+    getSuccessResponse("Mail sent successfully", {
+      userId: user.id,
+    }),
+    { status: 200 }
+  );
 }

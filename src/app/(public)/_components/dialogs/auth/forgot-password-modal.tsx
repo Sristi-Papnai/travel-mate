@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/dialog";
 import type { ForgotPasswordResponse } from "@/interfaces/openapi";
 import { forgotPassword } from "@/app/services/api/authApi";
-import { sendEmail } from "@/app/services/api/mailApi";
 
 interface ForgotFormInputs {
   email: string;
@@ -53,30 +52,7 @@ export default function ForgotPasswordModal() {
         return;
       }
   
-  
-    try {
-      await sendEmail({
-        to: data.email,
-        subject: "Reset Your Password",
-        htmlContent: `
-          <h1>Hello!</h1>
-          <p>
-            Click the link below to reset your password:
-            <br />
-            <a href="${process.env.NEXT_PUBLIC_APP_URL}/changepassword/${result.data?.magicToken}">
-              ${process.env.NEXT_PUBLIC_APP_URL}/changepassword/${result.data?.magicToken}
-            </a>
-          </p>
-        `,
-      });
-    } catch (mailErr) {
-      setErrorMsg(`Unexpected error. Please try again.${mailErr}`);
-
-    }
       setMsg(`Please check Your Email - ${data.email} for reset password link`);
-      // reset();
-      // closeForgot();
-      // openLogin();
     } catch (err) {
       setErrorMsg(`Unexpected error. Please try again.${err}`);
       setMsg("");
