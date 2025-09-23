@@ -2,10 +2,10 @@ export interface IErrorElement {
     [key: string]: string;
   }
   
-  export interface IStandardResponse {
+  export interface IStandardResponse<T = unknown> {
     error: boolean;
     errors: IErrorElement;
     msg: string;
-    data?: unknown;
+    data?: T;
   }
   

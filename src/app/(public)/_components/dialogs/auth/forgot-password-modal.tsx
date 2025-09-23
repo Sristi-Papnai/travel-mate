@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback} from "react";
+import { useEffect, useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useDialog } from "@/context/dialog-context";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,9 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import type { ForgotPasswordResponse } from "@/interfaces/openapi";
+import { forgotPassword } from "@/app/services/api/authApi";
+import DialogLoader from "@/app/_components/layout/dialog-loader";
 
 interface ForgotFormInputs {
   email: string;
@@ -18,6 +21,9 @@ interface ForgotFormInputs {
 
 export default function ForgotPasswordModal() {
   const { isForgotOpen, closeForgot, openLogin } = useDialog();
+  const [msg, setMsg] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const {
     register,
@@ -29,19 +35,39 @@ export default function ForgotPasswordModal() {
   useEffect(() => {
     if (!isForgotOpen) {
       reset();
+      setMsg("");
+      setErrorMsg("");
+      setLoading(false);
     }
   }, [isForgotOpen]);
 
-  const onSubmit = () => {
-    // console.log("Password reset requested for:", data);
-    // TODO: Call forgot password API
+  const onSubmit = async (data: ForgotFormInputs) => {
+    setMsg("");
+    setErrorMsg("");
+    setLoading(true); 
+    try {
+      const result: ForgotPasswordResponse = await forgotPassword({ email: data.email });
+  
+      if (result.error) {
+        setErrorMsg("Please enter registered email");
+        setMsg("");
+        setLoading(false); 
+        return;
+      }
+  
+      setMsg(`Please check your email - ${data.email} for the reset password link`);
+    } catch (err) {
+      setErrorMsg(`Unexpected error. Please try again.${err}`);
+      setMsg("");
+    } finally {
+      setLoading(false); 
+    }
   };
-
+  
   const handleGoBack = useCallback(() => {
     closeForgot();
     openLogin();
-  }, [closeForgot, openLogin]);
-  
+  }, []);
 
   return (
     <Dialog open={isForgotOpen} onOpenChange={(open) => !open && closeForgot()}>
@@ -57,6 +83,18 @@ export default function ForgotPasswordModal() {
             Forgot password form modal
           </DialogDescription>
         </DialogHeader>
+
+        {/* Loader overlay */}
+        {loading && <DialogLoader />}
+
+        {/* Error message */}
+        {errorMsg && (
+          <p className="text-red-500 text-sm mb-4 text-center">{errorMsg}</p>
+        )}
+        {/* Success message */}
+        {msg && (
+          <p className="text-green-500 text-sm mb-4 text-center">{msg}</p>
+        )}
 
         <p className="mb-6 text-gray-700">
           Enter your email address to reset your password.
@@ -88,7 +126,7 @@ export default function ForgotPasswordModal() {
           {/* Reset Password */}
           <Button
             type="submit"
-            disabled={!isValid}
+            disabled={!isValid || loading} 
             variant="default"
             className={`w-full py-3 rounded-lg ${
               isValid

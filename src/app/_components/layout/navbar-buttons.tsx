@@ -7,7 +7,7 @@ import { useDialog } from "@/context/dialog-context";
 import { CgProfile } from "react-icons/cg";
 import { useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import type { Session } from "next-auth";
 
 
@@ -15,14 +15,14 @@ export default function NavbarButtons({ session }: { session: Session | null  })
   const { openSignup } = useDialog();
   const router = useRouter();
 
+  const { data: clientSession } = useSession(); 
+
   const handleLogout = useCallback(async () => {
     await signOut({ redirect: false });
     router.push("/"); 
   }, []); 
 
-
-
-  if (session && session.user) {
+  if ((clientSession == undefined && session && session.user) || (clientSession && clientSession.user)) {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
