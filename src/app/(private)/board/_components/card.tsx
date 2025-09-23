@@ -49,7 +49,7 @@ export default function Card({ card }: CardProps) {
       ref={setNodeRef}
       style={style}
       {...attributes}
-      className="p-4 rounded-lg shadow-lg bg-white text-black w-72 border hover:border-2 border-purple-800"
+      className="p-4 rounded-lg shadow-lg bg-white text-black w-72 border hover:border-3 border-purple-800"
     >
       {/* Drag handle area */}
       <div {...listeners} className="cursor-grab active:cursor-grabbing">

@@ -103,8 +103,32 @@ export default function EditTripModal({ trip, isOpen, onClose }: EditTripModalPr
               <Link href="/board" className="text-white hover:text-[#e5daf2] transition ">
                 Trip to {formData.destination}
               </Link>
-
             </Dialog.Title>
+            {/* Status Dropdown */}
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger asChild>
+                <button className="text-sm flex py-1 px-2 rounded-lg border border-purple-800 bg-white text-black hover:border-2 hover:bg-purple-50">
+                  {formData.status === 'inplanning' ? 'In Planning' :
+                  formData.status === 'confirmed' ? 'Confirmed' :
+                  'Completed'}
+                  <IoIosArrowDown size={16} className="ml-2 text-black" />
+                </button>
+              </DropdownMenu.Trigger>
+
+              <DropdownMenu.Content className="text-sm bg-white rounded-lg border border-purple-300 shadow-md p-2 mt-2 ml-0 text-black">
+                {['inplanning', 'confirmed', 'completed'].map((status) => (
+                  <DropdownMenu.Item
+                    key={status}
+                    className="cursor-pointer rounded px-3 py-2 hover:bg-purple-50 hover:border hover:border-purple-800 "
+                    onSelect={() => updateField('status', status as "inplanning" | "confirmed" | "completed" | "cancelled" )}
+                  >
+                    {status === 'inplanning' ? 'In Planning' :
+                    status === 'confirmed' ? 'Confirmed' :
+                    status === 'cancelled' ? 'Cancelled' :'Completed'}
+                  </DropdownMenu.Item>
+                ))}
+              </DropdownMenu.Content>
+            </DropdownMenu.Root>
 
             </div>
             <Dialog.Close asChild>
@@ -113,7 +137,7 @@ export default function EditTripModal({ trip, isOpen, onClose }: EditTripModalPr
           </div>
 
           {/* Main Content */}
-          <div className="flex h-full">
+          <div className="flex h-full max-h-[calc(100vh-300px)]">
             {/* Left Column */}
             <div className="w-1/3 p-6 border-r border-gray-200 overflow-y-auto">
               {/* Title */}
@@ -235,40 +259,16 @@ export default function EditTripModal({ trip, isOpen, onClose }: EditTripModalPr
             {/* Middle Column */}
             <div className="w-1/3 p-6 border-r border-gray-200 overflow-y-auto">
               {/* Members */}
-              <div className="mb-6">
+              <div className="mb-1">
                 <div className="flex items-center mb-3 justify-between">
-                  {/* Status Dropdown */}
-                  <DropdownMenu.Root>
-                    <DropdownMenu.Trigger asChild>
-                      <button className="text-sm flex py-1 px-2 rounded-lg border border-purple-800 bg-white text-black hover:border-2 hover:bg-purple-50">
-                        {formData.status === 'inplanning' ? 'In Planning' :
-                        formData.status === 'confirmed' ? 'Confirmed' :
-                        'Completed'}
-                        <IoIosArrowDown size={16} className="ml-2 text-black" />
-                      </button>
-                    </DropdownMenu.Trigger>
-
-                    <DropdownMenu.Content className="text-sm bg-white rounded-lg border border-purple-300 shadow-md p-2 mt-2 ml-0 text-black">
-                      {['inplanning', 'confirmed', 'completed'].map((status) => (
-                        <DropdownMenu.Item
-                          key={status}
-                          className="cursor-pointer rounded px-3 py-2 hover:bg-purple-50 hover:border hover:border-purple-800"
-                          onSelect={() => updateField('status', status as "inplanning" | "confirmed" | "completed" | "cancelled" )}
-                        >
-                          {status === 'inplanning' ? 'In Planning' :
-                          status === 'confirmed' ? 'Confirmed' :
-                          status === 'cancelled' ? 'Cancelled' :'Completed'}
-                        </DropdownMenu.Item>
-                      ))}
-                    </DropdownMenu.Content>
-                  </DropdownMenu.Root>
+                  
                   <div className="flex items-center gap-2">
                     <button className="flex items-center gap-1 cursor-pointer px-3 py-1 bg-[#5A2D82] text-white text-sm rounded-md hover:bg-purple-800">
                       Invite Member
                     </button>
                   </div>
                 </div>
-                <div className="space-y-3">
+                <div className=" flex flex-wrap gap-5">
 
                   {/* Travel Dates */}
                   <div>
@@ -285,10 +285,40 @@ export default function EditTripModal({ trip, isOpen, onClose }: EditTripModalPr
                           updateField("end_date", end ? end.toISOString().split("T")[0] : "");
                         }}
                         placeholderText="Select start and end date"
-                        className="text-black w-full flex-1 px-3 py-2 border border-purple-300 rounded-md focus:ring-2 focus:ring-purple-800 focus:border-transparent"
+                        className="text-black lg:w-[220px] w-full flex-1 px-3 py-2 border border-purple-300 rounded-md focus:ring-2 focus:ring-purple-800 focus:border-transparent"
                       />
                       <IoCalendar size={16} className="text-gray-500" />
                     </div>
+                  </div>
+
+                  {/* Mode of Transport */}
+                  <div className="mb-2">
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">Mode of Transport</label>
+                    <div className="mb-6 w-full">
+                    {/* <label className="text-sm font-medium text-gray-700 mb-2 block">Mode of Transport</label> */}
+                    <DropdownMenu.Root>
+                      <DropdownMenu.Trigger asChild>
+                        <button className="text-sm flex w-full justify-between py-2 px-3 rounded-lg border border-purple-300 hover:border-purple-800 bg-white text-black hover:border-2 hover:bg-purple-50">
+                          {formData?.mode_of_transportation === 'Flight' ? 'Flight' :
+                          formData?.mode_of_transportation === 'Train' ? 'Train' :
+                          'Car'}
+                          <IoIosArrowDown size={16} className="ml-2 text-black" />
+                        </button>
+                      </DropdownMenu.Trigger>
+
+                      <DropdownMenu.Content className="text-sm bg-white rounded-lg border border-purple-300 shadow-md p-2 mt-2 w-full text-black">
+                        {['Flight', 'Train', 'Car'].map((mode) => (
+                          <DropdownMenu.Item
+                            key={mode}
+                            className="cursor-pointer rounded px-3 py-2 hover:bg-purple-50 hover:border hover:border-purple-800"
+                            onSelect={() => updateField('mode_of_transportation', mode)}
+                          >
+                            {mode}
+                          </DropdownMenu.Item>
+                        ))}
+                      </DropdownMenu.Content>
+                    </DropdownMenu.Root>
+                  </div>
                   </div>
                 </div>
               </div>
@@ -296,7 +326,7 @@ export default function EditTripModal({ trip, isOpen, onClose }: EditTripModalPr
               {/* Budget */}
               <div className="mb-6">
                 <label className="text-sm font-medium text-gray-700 mb-3 block">Budget</label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-wrap gap-8">
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">Min Budget</label>
                     <div className="flex items-center gap-1">
@@ -324,35 +354,6 @@ export default function EditTripModal({ trip, isOpen, onClose }: EditTripModalPr
                 </div>
               </div>
 
-              {/* Mode of Transport */}
-              <div className="mb-6">
-                <label className="text-sm font-medium text-gray-700 mb-3 block">Mode of Transport</label>
-                <div className="mb-6 w-full">
-                {/* <label className="text-sm font-medium text-gray-700 mb-2 block">Mode of Transport</label> */}
-                <DropdownMenu.Root>
-                  <DropdownMenu.Trigger asChild>
-                    <button className="text-sm flex w-full justify-between py-2 px-3 rounded-lg border border-purple-300 hover:border-purple-800 bg-white text-black hover:border-2 hover:bg-purple-50">
-                      {formData?.mode_of_transportation === 'Flight' ? 'Flight' :
-                      formData?.mode_of_transportation === 'Train' ? 'Train' :
-                      'Car'}
-                      <IoIosArrowDown size={16} className="ml-2 text-black" />
-                    </button>
-                  </DropdownMenu.Trigger>
-
-                  <DropdownMenu.Content className="text-sm bg-white rounded-lg border border-purple-300 shadow-md p-2 mt-2 w-full text-black">
-                    {['Flight', 'Train', 'Car'].map((mode) => (
-                      <DropdownMenu.Item
-                        key={mode}
-                        className="cursor-pointer rounded px-3 py-2 hover:bg-purple-50 hover:border hover:border-purple-800"
-                        onSelect={() => updateField('mode_of_transportation', mode)}
-                      >
-                        {mode}
-                      </DropdownMenu.Item>
-                    ))}
-                  </DropdownMenu.Content>
-                </DropdownMenu.Root>
-              </div>
-              </div>
             </div>
 
             {/* Right Column - Locations & Map */}
@@ -362,8 +363,8 @@ export default function EditTripModal({ trip, isOpen, onClose }: EditTripModalPr
                   <Tabs.Trigger value="map" className="px-4 py-2 text-sm font-medium text-gray-700 border-b-2 border-transparent data-[state=active]:border-purple-800 data-[state=active]:text-purple-800">
                     Map View
                   </Tabs.Trigger>
-                  <Tabs.Trigger value="itinerary" className="px-4 py-2 text-sm font-medium text-gray-700 border-b-2 border-transparent data-[state=active]:border-purple-800 data-[state=active]:text-purple-800">
-                    Itinerary
+                  <Tabs.Trigger value="members" className="px-4 py-2 text-sm font-medium text-gray-700 border-b-2 border-transparent data-[state=active]:border-purple-800 data-[state=active]:text-purple-800">
+                    Members
                   </Tabs.Trigger>
                 </Tabs.List>
                 <Tabs.Content value="map" className="mt-4">
@@ -416,15 +417,15 @@ export default function EditTripModal({ trip, isOpen, onClose }: EditTripModalPr
                     </div>
                   </div>
                 </Tabs.Content>
-                <Tabs.Content value="itinerary" className="mt-4">
-                  <div className="text-sm text-gray-500">Itinerary view will be displayed here.</div>
+                <Tabs.Content value="members" className="mt-4">
+                  <div className="text-sm text-gray-500">Members view will be displayed here.</div>
                 </Tabs.Content>
               </Tabs.Root>
             </div>
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 footerDiv">
+          <div className="fixed bottom-0 flex items-center justify-end gap-3 p-6 border-t border-gray-200 footerDiv w-full">
             <button
               onClick={onClose}
               className="px-4 py-2 border border-purple-800 border-2 text-gray-700 rounded-md hover:bg-purple-50"

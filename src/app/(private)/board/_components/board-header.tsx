@@ -23,7 +23,7 @@ export default function BoardHeader() {
         <DropdownMenu.Root>
   <DropdownMenu.Trigger asChild>
     <button
-      className=" flex py-2 px-3 rounded-xl border border-purple-800 bg-white text-black hover:border-2 hover:bg-purple-50"
+      className=" flex py-2 px-3 rounded-xl border border-purple-800 bg-white text-black hover:shadow-[inset_0px_0px_0px_2px_#5A2D82] hover:bg-purple-50"
     >
       {selected}
       <IoIosArrowDown size={20} className="ml-2 text-black" />
@@ -56,13 +56,13 @@ export default function BoardHeader() {
 
 
         {/* Calendar picker */}
-        <div className="flex items-center  rounded-xl cursor-pointer p-2 border border-purple-800 bg-white text-black hover:border-2 hover:bg-purple-50">
+        <div className="flex items-center  rounded-xl cursor-pointer p-2 border border-purple-800 bg-white text-black hover:shadow-[inset_0px_0px_0px_2px_#5A2D82] hover:bg-purple-50">
           <IoCalendarOutline className="text-black text-lg" size={24} />
           {/* <span className="text-sm text-black">{dateRange}</span> */}
         </div>
 
         {/* Search bar */}
-        <div className="relative rounded-xl border border-purple-800 bg-white text-black hover:border-2 hover:bg-purple-50">
+        <div className="relative rounded-xl border border-purple-800 bg-white text-black hover:shadow-[inset_0px_0px_0px_2px_#5A2D82] hover:bg-purple-50">
           {/* Left icon */}
           <IoSearchOutline className="absolute left-3 top-1/2 -translate-y-1/2 text-black text-lg" />
 
