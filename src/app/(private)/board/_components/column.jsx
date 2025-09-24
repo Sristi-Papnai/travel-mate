@@ -4,8 +4,10 @@ import Card from '@/app/(private)/board/_components/card';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
 import { IoAdd } from 'react-icons/io5';
+import { useRouter } from 'next/navigation';
 
 export default function Column({ id, column, cards }) {
+  const router = useRouter();
   const columnNames = {
     inplanning: 'In Planning',
     confirmed: 'Confirmed',
@@ -31,7 +33,10 @@ export default function Column({ id, column, cards }) {
         </div>
 
         {/* Gray circular plus button */}
-        <button className="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center text-black hover:bg-gray-400 transition-colors">
+        <button
+          onClick={() => router.push(`/create-trip?status=${column}`)}
+          className="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center text-black hover:bg-gray-400 transition-colors"
+        >
           <IoAdd size={16} />
         </button>
       </div>

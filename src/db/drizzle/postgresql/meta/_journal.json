@@ -29,6 +29,55 @@
       "when": 1757836555417,
       "tag": "0003_eminent_ink",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1758570153351,
+      "tag": "0004_glamorous_blade",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1758571064708,
+      "tag": "0005_perpetual_smasher",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1758625457725,
+      "tag": "0006_giant_smiling_tiger",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1758625485765,
+      "tag": "0007_uneven_killmonger",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1758650841782,
+      "tag": "0008_large_tenebrous",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1758650940459,
+      "tag": "0009_secret_strong_guy",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1758652579479,
+      "tag": "0010_talented_masked_marvel",
+      "breakpoints": true
     }
   ]
 }

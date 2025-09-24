@@ -1,8 +1,11 @@
 'use client';
 
+import BoardHeader from '@/app/(private)/board/_components/board-header';
 import Card from '@/app/(private)/board/_components/card';
 import Column from '@/app/(private)/board/_components/column';
 import EditTripModal from '@/app/(private)/board/_components/edit-trip-modal';
+import { saveTrip } from '@/app/actions/trip-actions';
+import type { Trip, UserTrips } from '@/interfaces/openapi';
 import {
   defaultDropAnimationSideEffects,
   DndContext,
@@ -14,19 +17,29 @@ import {
   useSensors,
 } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
-import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
+import { useEffect, useMemo, useState } from 'react';
 
 interface BoardClientProps {
-  initialCards: any[];
+  initialCards: UserTrips[];
   searchParams?: { trip?: string };
+  selectedTrip?: Trip | null;
 }
 
-export default function BoardClient({ initialCards, searchParams }: BoardClientProps) {
+export default function BoardClient({ initialCards, searchParams, selectedTrip: initialSelectedTrip }: BoardClientProps) {
+  
   const [cards, setCards] = useState(initialCards);
   const [activeId, setActiveId] = useState(null);
-  const [selectedTrip, setSelectedTrip] = useState<any>(null);
+  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(initialSelectedTrip || null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const { data: session } = useSession();
+
+  // new states for filters
+  const [selectedFilter, setSelectedFilter] = useState("All Trips");
+  const [searchQuery, setSearchQuery] = useState("");
+
+ 
 
   // Fix hydration issue by ensuring client-side rendering
   useEffect(() => {
@@ -34,19 +47,19 @@ export default function BoardClient({ initialCards, searchParams }: BoardClientP
     
     // Function to check URL and open modal
     const checkUrlAndOpenModal = () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const tripParam = urlParams.get('trip');
+      // const urlParams = new URLSearchParams(window.location.search);
+      // const tripParam = urlParams.get('trip');
       
-      if (tripParam) {
-        const trip = cards.find(card => card.id == tripParam);
-        if (trip) {
-          setSelectedTrip(trip);
+      if (selectedTrip) {
+        // const trip = cards.find(card => card.id == tripParam);
+        // if (trip) {
+          // setSelectedTrip(trip);
           setIsModalOpen(true);
-        }
+        // }
       } else {
         // Close modal if no trip parameter
         setIsModalOpen(false);
-        setSelectedTrip(null);
+        // setSelectedTrip(null);
       }
     };
     
@@ -70,7 +83,7 @@ export default function BoardClient({ initialCards, searchParams }: BoardClientP
   useEffect(() => {
     const safeSearchParams = searchParams || {};
     if (safeSearchParams.trip) {
-      const trip = cards.find(card => card.id == safeSearchParams.trip);
+      const trip = cards.find(card => card.id == Number(safeSearchParams.trip));
       if (trip) {
         setSelectedTrip(trip);
         setIsModalOpen(true);
@@ -131,6 +144,22 @@ export default function BoardClient({ initialCards, searchParams }: BoardClientP
     };
   }, [isClient, cards]);
 
+  const filteredCards = useMemo(() => {
+    return cards.filter((card) => {
+      if (selectedFilter === "My Trips" && card.created_by.id != session?.user?.id) {
+        return false;
+      }
+      if (selectedFilter === "Shared Trips" && card.created_by.id == session?.user?.id) {
+        return false;
+      }
+      if (searchQuery.trim() != "" && card.destination && !card.destination.toLowerCase().includes(searchQuery.toLowerCase())) {
+        return false;
+      }
+      return true;
+    });
+  }, [cards, selectedFilter, searchQuery, session?.user?.id]);
+  
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedTrip(null);
@@ -148,7 +177,7 @@ export default function BoardClient({ initialCards, searchParams }: BoardClientP
 
   const columns = ['inplanning', 'confirmed', 'completed', 'cancelled'];
 
-  const findCard = (id: string) => cards.find((c) => c.id === id);
+  const findCard = (id: string) => filteredCards.find((c) => c.id === id);
 
   function handleDragStart(event: any) {
     setActiveId(event.active.id);
@@ -167,28 +196,35 @@ export default function BoardClient({ initialCards, searchParams }: BoardClientP
 
     // Dropped onto another card
     if (overCard) {
-      if (activeCard.status !== overCard.status) {
+      if (activeCard?.status !== overCard.status) {
         // move to other column (append near overCard's column)
         setCards((prev) =>
           prev.map((c) => (c.id === active.id ? { ...c, status: overCard.status } : c))
         );
+        updateTripInDB(activeCard?.id, {status:overCard.status });
+        
       } else {
         // reorder inside same column
-        // overall indices in cards array
         const prev = [...cards];
         // compute global indices
         const globalOldIndex = prev.findIndex((c) => c.id === active.id);
         const globalNewIndex = prev.findIndex((c) => c.id === over.id);
         setCards((p) => arrayMove(p, globalOldIndex, globalNewIndex));
+        
       }
     } else {
       // Dropped on empty column area (over.id is column id)
       const overColumn = over.id;
       if (columns.includes(overColumn) && activeCard.status !== overColumn) {
         setCards((prev) => prev.map((c) => (c.id === active.id ? { ...c, status: overColumn } : c)));
+        updateTripInDB(activeCard.id, {status:overColumn });
       }
     }
   }
+  const updateTripInDB = async (tripId, data) => {
+    await saveTrip(tripId, data);
+  }
+  
 
   function handleDragCancel() {
     setActiveId(null);
@@ -208,10 +244,10 @@ export default function BoardClient({ initialCards, searchParams }: BoardClientP
                 <div className="bg-gray-100 rounded-lg p-4 h-96">
                   <h3 className="text-lg font-semibold mb-4 capitalize">{col}</h3>
                   <div className="space-y-3">
-                    {cards.filter((c) => c.column === col).map((card) => (
+                    {filteredCards.filter((c) => c.status === col).map((card) => (
                       <div key={card.id} className="p-4 rounded-lg shadow-lg bg-white">
-                        <h4 className="font-medium">{card.title}</h4>
-                        <p className="text-sm text-gray-600">{card.type}</p>
+                        <h4 className="font-medium">{card.destination}</h4>
+                        <p className="text-sm text-gray-600">{card.status}</p>
                       </div>
                     ))}
                   </div>
@@ -231,9 +267,16 @@ export default function BoardClient({ initialCards, searchParams }: BoardClientP
 
   return (
     <>
+     {/* Header controls */}
+     <BoardHeader
+        selectedFilter={selectedFilter}
+        onFilterChange={setSelectedFilter}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+      />
       <DndContext
         sensors={sensors}
-        collisionDetection={rectIntersection} // better for cross-axis between containers
+        collisionDetection={rectIntersection} 
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
@@ -248,7 +291,7 @@ export default function BoardClient({ initialCards, searchParams }: BoardClientP
                 key={col}
                 id={col}
                 column={col}
-                cards={cards.filter((c) => c.status === col)}
+                cards={filteredCards.filter((c) => c.status === col)}
               />
             ))}
           </div>

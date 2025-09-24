@@ -12,8 +12,12 @@ import { IoIosArrowDown } from 'react-icons/io';
 
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { saveTrip } from '@/app/actions/trip-actions';
+import { useSession } from 'next-auth/react';
+import CommentsTab from '@/app/(private)/board/_components/comments-tab';
+import InviteMemberDialog from '@/app/(private)/board/_components/invite-member-dialog';
 interface EditTripModalProps {
-  trip: Trip;
+  trip: Trip | null;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -22,12 +26,15 @@ interface EditTripModalProps {
 export default function EditTripModal({ trip, isOpen, onClose }: EditTripModalProps) {
   // Main form data state
   const [formData, setFormData] = useState<Trip | null>(null);
+  const { data: session } = useSession();
 
   // Object to track only changed values
   const [changedData, setChangedData] = useState<Partial<Trip>>({});
 
   useEffect(() => {
     if (trip) {
+      console.log("in user effect trip  ")
+      console.log(trip)
       setFormData(trip);
       setChangedData({});
     }
@@ -56,7 +63,7 @@ export default function EditTripModal({ trip, isOpen, onClose }: EditTripModalPr
       id: Date.now(),
       description: text,
       is_completed: false,
-      created_by: { id: 0, name: 'You' },
+      created_by: { id: session?.user?.id, name: session?.user?.name ?? null },
       sequence: formData.checklist ? formData.checklist.length + 1 : 1,
     };
     updateField('checklist', formData.checklist ? [...formData.checklist, newItem] : [newItem]);
@@ -82,13 +89,21 @@ export default function EditTripModal({ trip, isOpen, onClose }: EditTripModalPr
     updateField('locations' as any, newLocations);
   };
 
-  // Save button
-  const handleSave = () => {
-    console.log('Changed Data to send to backend:', changedData);
-    // Send `changedData` to backend via API call
+  const handleSave = async () => {
+    console.log("Changed Data to send to backend:", changedData);
+  
+    try {
+      if (!trip.id) throw new Error("Trip ID missing");
+  
+      // call server action
+      const updatedTrip = await saveTrip(trip.id, changedData);
+      console.log("Update response:", updatedTrip);
+    } catch (err) {
+      console.error("Error updating trip:", err);
+    }
+  
     onClose();
   };
-
   return (
     <Dialog.Root open={isOpen} onOpenChange={onClose}>
       <Dialog.Portal>
@@ -116,7 +131,7 @@ export default function EditTripModal({ trip, isOpen, onClose }: EditTripModalPr
               </DropdownMenu.Trigger>
 
               <DropdownMenu.Content className="text-sm bg-white rounded-lg border border-purple-300 shadow-md p-2 mt-2 ml-0 text-black">
-                {['inplanning', 'confirmed', 'completed'].map((status) => (
+                {['inplanning', 'confirmed', 'completed', 'cancelled'].map((status) => (
                   <DropdownMenu.Item
                     key={status}
                     className="cursor-pointer rounded px-3 py-2 hover:bg-purple-50 hover:border hover:border-purple-800 "
@@ -155,7 +170,7 @@ export default function EditTripModal({ trip, isOpen, onClose }: EditTripModalPr
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
                 <textarea
-                  value={formData.description}
+                  value={formData.description ?? ""}
                   onChange={(e) => updateField('description', e.target.value)}
                   rows={4}
                   className="text-black w-full px-3 py-2 border border-purple-300 rounded-md focus:ring-2 focus:ring-purple-800 focus:border-transparent resize-none"
@@ -218,42 +233,12 @@ export default function EditTripModal({ trip, isOpen, onClose }: EditTripModalPr
                 </div>
               </div>
 
-              {/* Comments/History Tabs */}
-              <Tabs.Root defaultValue="comments" className="mt-6 mb-6">
-                <Tabs.List className="flex border-b border-gray-200">
-                  <Tabs.Trigger value="comments" className="px-4 py-2 text-sm font-medium text-gray-700 border-b-2 border-transparent data-[state=active]:border-purple-600 data-[state=active]:text-purple-800">
-                    Comments
-                  </Tabs.Trigger>
-                  <Tabs.Trigger value="history" className="px-4 py-2 text-sm font-medium text-gray-700 border-b-2 border-transparent data-[state=active]:border-purple-600 data-[state=active]:text-purple-800">
-                    History
-                  </Tabs.Trigger>
-                </Tabs.List>
-                <Tabs.Content value="comments" className="mt-4">
-                  <div className="text-sm text-gray-500 mb-4">
-                    {formData.comments?.length ? 'Comments for this trip:' : 'There is no comments for this trip yet.'}
-                  </div>
-                  <div className="space-y-3">
-                    <textarea
-                      placeholder="Type your comment here"
-                      className="w-full px-3 py-2 border border-purple-300 rounded-md focus:ring-2 focus:ring-purple-800 focus:border-transparent resize-none"
-                      rows={3}
-                    />
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <button className="p-2 hover:bg-gray-100 rounded">
-                          <IoHappy size={16} />
-                        </button>
-                        <button className="p-2 hover:bg-gray-100 rounded">
-                          <IoImage size={16} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </Tabs.Content>
-                <Tabs.Content value="history" className="mt-4">
-                  <div className="text-sm text-gray-500">Trip history will be displayed here.</div>
-                </Tabs.Content>
-              </Tabs.Root>
+              <CommentsTab 
+                tripId={formData.id} 
+                formData={formData} 
+                setFormData={setFormData} 
+              />
+
             </div>
 
             {/* Middle Column */}
@@ -263,9 +248,7 @@ export default function EditTripModal({ trip, isOpen, onClose }: EditTripModalPr
                 <div className="flex items-center mb-3 justify-between">
                   
                   <div className="flex items-center gap-2">
-                    <button className="flex items-center gap-1 cursor-pointer px-3 py-1 bg-[#5A2D82] text-white text-sm rounded-md hover:bg-purple-800">
-                      Invite Member
-                    </button>
+                    <InviteMemberDialog />
                   </div>
                 </div>
                 <div className=" flex flex-wrap gap-5">
@@ -333,7 +316,7 @@ export default function EditTripModal({ trip, isOpen, onClose }: EditTripModalPr
                       <span className="text-gray-500">₹</span>
                       <input
                         type="number"
-                        value={formData.min_budget}
+                        value={Number(formData.min_budget)}
                         onChange={(e) => updateField('min_budget', Number(e.target.value))}
                         className="text-black flex-1 px-2 py-1 border border-purple-300 rounded focus:ring-2 focus:ring-purple-800 focus:border-transparent"
                       />
@@ -345,7 +328,7 @@ export default function EditTripModal({ trip, isOpen, onClose }: EditTripModalPr
                       <span className="text-gray-500">₹</span>
                       <input
                         type="number"
-                        value={formData.max_budget}
+                        value={Number(formData.max_budget)}
                         onChange={(e) => updateField('max_budget', Number(e.target.value))}
                         className="text-black flex-1 px-2 py-1 border border-purple-300 rounded focus:ring-2 focus:ring-purple-800 focus:border-transparent"
                       />
@@ -418,8 +401,30 @@ export default function EditTripModal({ trip, isOpen, onClose }: EditTripModalPr
                   </div>
                 </Tabs.Content>
                 <Tabs.Content value="members" className="mt-4">
-                  <div className="text-sm text-gray-500">Members view will be displayed here.</div>
-                </Tabs.Content>
+                <div className="space-y-4">
+                  {(formData.members?.users) ? formData.members?.users?.map((m) => (
+                    <div key={m.id} className="flex items-start space-x-3">
+                      {/* Profile Icon */}
+                      <div className="flex-shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-blue-800 flex items-center justify-center text-white font-bold">
+                          {m.name?.charAt(0) || "U"}
+                        </div>
+                      </div>
+
+                      {/* Member Info */}
+                      <div className="flex-1">
+                        {/* Name + Email */}
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-gray-900">{m.name}</span>
+                          <span className="text-xs text-gray-500">{m.email}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )) : ( <div> No members </div>)
+                  }
+                </div>
+              </Tabs.Content>
+
               </Tabs.Root>
             </div>
           </div>
@@ -428,7 +433,7 @@ export default function EditTripModal({ trip, isOpen, onClose }: EditTripModalPr
           <div className="fixed bottom-0 flex items-center justify-end gap-3 p-6 border-t border-gray-200 footerDiv w-full">
             <button
               onClick={onClose}
-              className="px-4 py-2 border border-purple-800 border-2 text-gray-700 rounded-md hover:bg-purple-50"
+              className="px-4 py-2 border-purple-800 border-2 text-gray-700 rounded-md hover:bg-purple-50"
             >
               Cancel
             </button>

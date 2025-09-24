@@ -1,17 +1,19 @@
 'use client';
 
-import type { Trip } from '@/interfaces/openapi';
+import type { UserTrips } from '@/interfaces/openapi';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { IoBriefcase, IoCalendar, IoCash, IoPeople, IoPersonCircle } from 'react-icons/io5';
 
 interface CardProps {
-  card: Trip
+  card: UserTrips
 }
 
 export default function Card({ card }: CardProps) {
   const router = useRouter();
+  const { data: session } = useSession();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: card.id });
 
@@ -26,7 +28,7 @@ export default function Card({ card }: CardProps) {
     // Prevent navigation when dragging
     if (isDragging) return;
     e.preventDefault();
-    router.push(`/board?trip=${card.id}`);
+    router.replace(`/board?trip=${card.id}`);
   };
 
   function formatTripDates(startDate: string, endDate: string) {
@@ -43,6 +45,7 @@ export default function Card({ card }: CardProps) {
     const completed = checklist.filter(item => item.is_completed).length;
     return Math.round((completed / checklist.length) * 100);
   }
+  const isShared = session?.user?.id != card.created_by.id;
 
   return (
     <div
@@ -67,7 +70,7 @@ export default function Card({ card }: CardProps) {
         <div className="flex justify-between items-center">
           <div className='flex justify-between items-center gap-2'>
             <IoPeople className="text-gray-500" />
-            <span>{card.members.count}</span>
+            <span>{card.members}</span>
           </div>
           <div className='flex justify-between items-center gap-2'>
             <IoBriefcase className="text-gray-500 ml-2" />
@@ -80,7 +83,7 @@ export default function Card({ card }: CardProps) {
         </div>
         <div className="flex items-center gap-2">
           <IoCash className="text-gray-500" />
-          <span>{card.min_budget}</span>
+          <span>{card.min_budget ?? "Not Yet Decided"}</span>
         </div>
       </div>
 
@@ -96,7 +99,16 @@ export default function Card({ card }: CardProps) {
       )}
 
       <div className="mt-3 flex justify-end">
-        <IoPersonCircle className="text-gray-500 text-xl" />
+      {isShared && (
+              <h3 className="inline-block bg-green-200 mx-2 text-green-800 text-sm font-medium p-1 rounded-md">
+                Shared
+              </h3>
+            )}
+      <IoPersonCircle
+        size={28}
+        className="text-gray-500 text-xl"
+        title={card.created_by.name} 
+      />
       </div>
         </div>
       </div>

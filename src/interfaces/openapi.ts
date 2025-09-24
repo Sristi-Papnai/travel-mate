@@ -124,11 +124,37 @@ export interface ResetPasswordPayload {
   password: string;
 }
 
-// lib/types.ts
+
+export interface QuestionField {
+  label: string;
+  key: string;
+  type: string;
+  required?: boolean; 
+  options?: string[]; 
+}
+
+export interface Question {
+  title: string;
+  fields: QuestionField[];
+}
+export interface CreateTripPayload {
+  destination: string;
+  description: string | null;
+  occasion: string | null;
+  members: number | null;
+  start_date: string | null; 
+  end_date: string | null;   
+  min_budget: number | null;
+  max_budget: number | null;
+  status: "inplanning" | "confirmed" | "completed" | "cancelled"; 
+  user: User
+}
+
 
 export type User = {
   id: number;
   name: string;
+  email?:string;
 };
 
 export type ChecklistItem = {
@@ -142,23 +168,26 @@ export type ChecklistItem = {
 
 export type FileItem = {
   id: number;
-  file_name: string;
-  filepath: string;
-  file_type: string;
+  file_name: string | null;
+  file_path: string | null;
+  file_type: string | null;
+  created_by: User;
 };
 
 export type CommentItem = {
   id: number;
-  trip_id: number;
-  data: string;
+  trip_id: number | null;
+  data: string | null;
   commented_by: User;
+  created_at?: string;
 };
+
 export type LocationItem = {
   id: number;
   trip_id: number;
-  name: string;
-  longitude: string;
-  latitude: string;
+  name: string  | null;
+  longitude: string  | null;
+  latitude: string  | null;
   added_by: User;
 };
 
@@ -169,21 +198,38 @@ export type Members = {
 
 export type Trip = {
   id: number;
-  destination: string;
-  description: string;
-  occasion: string;
+  destination: string | null;
+  description: string | null;
+  occasion: string | null;
   mode_of_transportation: string | null;
-  members: Members;
-  start_date: string; 
-  end_date: string;   
-  min_budget: number;
-  max_budget: number;
-  budget_per_person: number;
+  start_date: string | null; 
+  end_date: string | null;   
+  min_budget: number | null;
+  max_budget: number | null;
+  budget_per_person: number | null;
   status: "inplanning" | "confirmed" | "completed" | "cancelled"; 
+  members: Members;
   checklist?: ChecklistItem[];
-  files?: FileItem[];
+  files: FileItem[];
   comments?: CommentItem[];
   locations?: LocationItem[];
 };
+export type UserTrips = {
+  id: number;
+  destination: string | null;
+  description: string | null;
+  occasion: string | null;
+  mode_of_transportation: string | null;
+  start_date: string | null; 
+  end_date: string | null;   
+  min_budget: number | null;
+  max_budget: number | null;
+  budget_per_person: number | null;
+  status: "inplanning" | "confirmed" | "completed" | "cancelled"; 
+  members: number;
+  checklist?: ChecklistItem[];
+  created_by: User
+};
 
 
+export type TripStatus = "inplanning" | "confirmed" | "completed" | "cancelled";
