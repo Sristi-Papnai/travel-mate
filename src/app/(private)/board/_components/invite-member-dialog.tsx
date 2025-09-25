@@ -8,8 +8,9 @@ import { IoAdd, IoClose } from "react-icons/io5";
 
 // import your loader (spinner component)
 import DialogLoader from "@/app/_components/layout/dialog-loader";
+import { inviteMembersAction } from "@/app/actions/trip-actions";
 
-export default function InviteMemberDialog() {
+export default function InviteMemberDialog(tripId) {
   const [isOpen, setIsOpen] = useState(false);
   const [emailInput, setEmailInput] = useState("");
   const [emails, setEmails] = useState<string[]>([]);
@@ -26,20 +27,20 @@ export default function InviteMemberDialog() {
   const handleSendInvites = async () => {
     setLoading(true);
     setIsDisabled(true);
-
+  
     try {
-      // 🔥 Call your API here
-      console.log("Inviting:", emails);
-      await new Promise((res) => setTimeout(res, 2000)); // fake delay
-      setIsOpen(false);
+      const response = await inviteMembersAction({ tripId, emails });
+      console.log(response);
       setEmails([]);
-    } catch (error) {
-      console.error("Error sending invites:", error);
+      setIsOpen(false);
+    } catch (err) {
+      console.error("Error inviting members:", err);
     } finally {
       setLoading(false);
       setIsDisabled(false);
     }
   };
+  
 
   return (
     <>

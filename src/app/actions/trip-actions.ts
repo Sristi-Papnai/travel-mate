@@ -1,8 +1,8 @@
 "use server"; 
 
 import { authOptions } from "@/app/_libs/utils/auth";
-import { findUserTrips, getTripData, updateTrip } from "@/db/services/trips";
-import type { CommentItem, CreateTripPayload, Trip, UserTrips } from "@/interfaces/openapi";
+import { findUserTrips, getTripData, inviteMembersService, updateTrip } from "@/db/services/trips";
+import type { CommentItem, CreateTripPayload, InviteMembersPayload, Trip, UserTrips } from "@/interfaces/openapi";
 import { getServerSession } from "next-auth";
 
 
@@ -37,5 +37,16 @@ export async function fetchTripData(tripId : number): Promise<Trip | null> {
   const trip = await getTripData(Number(tripId));
 
   return trip;
+}
+
+export async function inviteMembersAction({ tripId, emails }: InviteMembersPayload) {
+  const session = await getServerSession(authOptions);
+  if (!session) return { success: false, msg: "Not authenticated" };
+
+  const inviterName = session.user?.name || "Admin";
+
+  const invitedEmails = await inviteMembersService({ tripId, emails, inviterName });
+
+  return { success: true, msg: "Invites sent", invited: invitedEmails };
 }
 

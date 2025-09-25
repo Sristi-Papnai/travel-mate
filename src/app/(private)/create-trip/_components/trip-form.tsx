@@ -12,6 +12,7 @@ import { createTrip } from "@/app/services/api/trips";
 import type { CreateTripPayload, TripStatus } from "@/interfaces/openapi";
 import type { Session } from "next-auth";
 import DialogLoader from "@/app/_components/layout/dialog-loader";
+import { inviteMembersAction } from "@/app/actions/trip-actions";
 
 export default function TripForm({ session }: { session: Session | null }) {
   const router = useRouter();
@@ -42,6 +43,7 @@ export default function TripForm({ session }: { session: Session | null }) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [tripCreated, setTripCreated] = useState(false);
+  const [tripId, setTripId] = useState(null);
 
   // Email invite state
   const [emailInput, setEmailInput] = useState("");
@@ -93,6 +95,7 @@ export default function TripForm({ session }: { session: Session | null }) {
     setLoading(false);
 
     if (!response.error) {
+      setTripId(response?.data?.trip?.id)
       setTripCreated(true); // show invite form
     } else {
       alert("Failed to create trip");
@@ -114,7 +117,7 @@ export default function TripForm({ session }: { session: Session | null }) {
       console.log("Inviting emails:", emails);
   
       // Simulate API call (replace with real invite logic)
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const response = await inviteMembersAction({ tripId, emails });
   
       
       setEmails([]); // optionally clear emails

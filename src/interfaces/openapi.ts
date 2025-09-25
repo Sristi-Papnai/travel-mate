@@ -228,8 +228,22 @@ export type UserTrips = {
   status: "inplanning" | "confirmed" | "completed" | "cancelled"; 
   members: number;
   checklist?: ChecklistItem[];
-  created_by: User
+  created_by: User,
+  // files: FileItem[];
+  // comments?: CommentItem[];
+  // locations?: LocationItem[];
 };
 
 
 export type TripStatus = "inplanning" | "confirmed" | "completed" | "cancelled";
+
+export interface InviteMembersPayload {
+  tripId: number;
+  emails: string[];
+}
+
+export interface InviteMembersInput {
+  tripId: number;
+  emails: string[];
+  inviterName: string;
+}

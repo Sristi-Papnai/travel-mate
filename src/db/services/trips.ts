@@ -1,12 +1,16 @@
+import { sendEmail } from "@/app/services/mail/send-mail";
 import { db } from "@/db/client";
 import {
   trips,
   members,
   checklists,
-  comments
+  comments,
+  users
 } from "@/db/schema/postgres";
-import type { Trip, UserTrips } from "@/interfaces/openapi";
+import type { InviteMembersInput, Trip, UserTrips } from "@/interfaces/openapi";
 import { and, eq, inArray } from "drizzle-orm";
+import bcrypt from "bcrypt";
+
 
 export async function findAllTrips(userId: number): Promise<Trip[]> {
     const allTrips = await db.query.trips.findMany({
@@ -182,6 +186,9 @@ export async function findAllTrips(userId: number): Promise<Trip[]> {
         creator: true,
         members: { with: { user: true } },
         checklists: { with: { creator: true, completer: true } },
+        // files: { with: { user: true } },
+        // comments: { with: { user: true } },
+        // savedLocations: { with: { user: true } },
       },
     });
 
@@ -218,6 +225,34 @@ export async function findAllTrips(userId: number): Promise<Trip[]> {
           : undefined,
         sequence: c.sequence,
       })),
+      // files: t.files.map((f) => ({
+      //   id: f.id,
+      //   file_name: f.fileName,
+      //   file_path: f.filePath,
+      //   file_type: f.fileType,
+      //   created_by: f.user
+      //     ? { id: f.user.id, name: `${f.user.firstName} ${f.user.lastName}`, email: f.user.email ?? undefined }
+      //     : { id: 0, name: "Unknown", email: undefined },
+      // })),
+      // comments: t.comments.map((c) => ({
+      //   id: c.id,
+      //   trip_id: t.id,
+      //   data: c.data,
+      //   created_at: c.createdAt,
+      //   commented_by: c.user
+      //     ? { id: c.user.id, name: `${c.user.firstName} ${c.user.lastName}`, email: c.user.email }
+      //     : { id: 0, name: "Unknown" },
+      // })),
+      // locations: t.savedLocations.map((l) => ({
+      //   id: l.id,
+      //   trip_id: t.id,
+      //   name: l.name,
+      //   longitude: l.longitude,
+      //   latitude: l.latitude,
+      //   added_by: l.user
+      //     ? { id: l.user.id, name: `${l.user.firstName} ${l.user.lastName}`, email: l.user.email }
+      //     : { id: 0, name: "Unknown" },
+      // })),
     }));
 
   }
@@ -320,11 +355,6 @@ export async function findAllTrips(userId: number): Promise<Trip[]> {
         }
       }
 
-
-      console.log("here for comments")
-      console.log(incomingComments)
-      console.log("here for comments type check")
-      console.log(Array.isArray(incomingComments))
       if (incomingComments && Array.isArray(incomingComments)) {
         for (const comment of incomingComments) {
 
@@ -345,6 +375,121 @@ export async function findAllTrips(userId: number): Promise<Trip[]> {
       return false;
     }
   };
+
+  export async function inviteMembersService({ tripId, emails, inviterName }: InviteMembersInput) {
+    // 0️⃣ Sanity checks
+    if (!tripId || emails.length === 0) return [];
+
+    // Ensure tripId is a number
+    if (typeof tripId === "object" && tripId?.tripId) tripId = tripId.tripId;
+
+    console.log("inviteMembersService")
+    console.log("tripId")
+    console.log(tripId)
+
+    // 1️⃣ Fetch existing users
+    const existingUsers = await db.select().from(users).where(inArray(users.email, emails));
+    const existingEmails = existingUsers.map(u => u.email);
+
+    // 2️⃣ Create missing users
+    const newUsersData = emails
+      .filter(email => !existingEmails.includes(email))
+      .map(email => {
+        const [first, last] = email.split("@")[0].split(".");
+        const password = Math.random().toString(36).slice(-8);
+        return {
+          firstName: first?.charAt(0).toUpperCase() + (first?.slice(1) || ""),
+          lastName: last?.charAt(0).toUpperCase() + (last?.slice(1) || ""),
+          email,
+          password: bcrypt.hashSync(password, 10),
+          plainPassword: password,
+        };
+      });
+
+    let newUsers: (typeof newUsersData[0] & { id: number })[] = [];
+    if (newUsersData.length > 0) {
+      const inserted = await db.insert(users).values(
+        newUsersData.map(u => ({
+          firstName: u.firstName,
+          lastName: u.lastName,
+          email: u.email,
+          password: u.password,
+        }))
+      ).returning();
+
+      newUsers = inserted.map((u, i) => ({ ...u, plainPassword: newUsersData[i].plainPassword }));
+    }
+
+
+
+    const allUsers = [...existingUsers, ...newUsers];
+
+    // 3️⃣ Fetch existing trip members
+    let existingMembers: { userId: number }[] = [];
+    if (allUsers.length > 0) {
+      existingMembers = await db.select().from(members).where(
+        and(
+          eq(members.tripId, tripId),
+          inArray(members.userId, allUsers.map(u => u.id))
+        )
+      );
+    }
+    const existingMemberUserIds = existingMembers.map(m => m.userId);
+
+    // 4️⃣ Add new members
+    const membersToInsert = allUsers.filter(u => !existingMemberUserIds.includes(u.id));
+
+    console.log("membersToInsert")
+    console.log(membersToInsert)
+    if (membersToInsert.length > 0) {
+      await db.insert(members).values(
+        membersToInsert.map(u => ({
+          userId: u.id,
+          tripId,
+          roleId: 2, // normal member
+        }))
+      );
+    }
+
+    // 5️⃣ Fetch trip details once
+    const trip = await db.select().from(trips).where(eq(trips.id, tripId)).limit(1).then(r => r[0]);
+    if (!trip) return [];
+
+    // 6️⃣ Send invite emails
+    for (const user of membersToInsert) {
+      try {
+        const mail = await sendEmail({
+          to: user.email,
+          subject: `You have been invited to ${trip.destination}`,
+          htmlContent : user.plainPassword
+                ? `
+                  <h2>Hello ${user.firstName}!</h2>
+                  <p>${inviterName} invited you to join the trip on Travel Mate: <strong>${trip.destination}</strong></p>
+                  <p>Your login credentials:</p>
+                  <p>Email: ${user.email}</p>
+                  <p>Password: ${user.plainPassword}</p>
+                  <p>Please login and update your password.</p>
+                `
+                : `
+                  <h2>Hello ${user.firstName}!</h2>
+                  <p>${inviterName} invited you to join the trip on Travel Mate: <strong>${trip.destination}</strong></p>
+                  <p>You already have an account. Welcome!</p>
+                `
+                });
+
+        if (!mail.success) {
+          console.error(`Failed to send invite email to ${user.email}`);
+        }
+      } catch (err) {
+        console.error(`Error sending invite to ${user.email}:`, err);
+      }
+    }
+
+    // 7️⃣ Return emails of invited users
+    return membersToInsert.map(u => u.email);
+  }
+
+  
   
 
 

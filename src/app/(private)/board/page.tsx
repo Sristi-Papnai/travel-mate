@@ -1,33 +1,11 @@
 // app/(private)/board/page.tsx
 import BoardClient from "./_components/board-client";
 import { Card, CardContent } from "@/components/ui/card";
-import type { Trip, UserTrips } from "@/interfaces/openapi";
-import { fetchUserTrips, fetchTripData } from "@/app/actions/trip-actions";
+import type { UserTrips } from "@/interfaces/openapi";
+import { fetchUserTrips } from "@/app/actions/trip-actions";
 
-interface BoardPageProps {
-  searchParams?: { trip?: string };
-}
-
-export default async function BoardPage({ searchParams }: BoardPageProps) {
-  const safeSearchParams = searchParams || {};
-
-
-  let selectedTrip: Trip | null = null;
-  const trips = await fetchUserTrips();
-
-  try {
-    if (safeSearchParams.trip) {
-      // Fetch selected trip details
-      selectedTrip = await fetchTripData(Number(safeSearchParams.trip));
-    } 
-  } catch (err) {
-    console.error("Failed to fetch trips:", err);
-  }
-
-  console.log("data for selectedTrip")
-  console.log(selectedTrip)
-  console.log("data for trips")
-  console.log(trips)
+export default async function BoardPage() {
+  const trips: UserTrips[] | [] = await fetchUserTrips();
 
   return (
     <div className="px-6 py-2">
@@ -36,8 +14,6 @@ export default async function BoardPage({ searchParams }: BoardPageProps) {
           {/* Board UI */}
           <BoardClient
             initialCards={trips} 
-            searchParams={safeSearchParams}
-            selectedTrip={selectedTrip} 
           />
         </CardContent>
       </Card>

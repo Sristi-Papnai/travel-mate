@@ -1,46 +1,49 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import type { Trip, ChecklistItem } from '@/interfaces/openapi';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
+import { fetchTripData, saveTrip } from '@/app/actions/trip-actions'; 
+import { useSession } from 'next-auth/react';
+import { Button } from '@/components/ui/button';
+import type { ChecklistItem, Trip, UserTrips } from '@/interfaces/openapi';
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import * as Tabs from '@radix-ui/react-tabs';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { IoAdd, IoCalendar, IoCheckmark, IoClose, IoHappy, IoImage, IoSearch, IoTrash, IoTrashBinOutline } from 'react-icons/io5';
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { IoIosArrowDown } from 'react-icons/io';
+import { IoAdd, IoCalendar, IoCheckmark, IoClose, IoSearch, IoTrash, IoTrashBinOutline } from 'react-icons/io5';
 
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import { saveTrip } from '@/app/actions/trip-actions';
-import { useSession } from 'next-auth/react';
 import CommentsTab from '@/app/(private)/board/_components/comments-tab';
 import InviteMemberDialog from '@/app/(private)/board/_components/invite-member-dialog';
-interface EditTripModalProps {
-  trip: Trip | null;
-  isOpen: boolean;
-  onClose: () => void;
-}
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
-
-export default function EditTripModal({ trip, isOpen, onClose }: EditTripModalProps) {
-  // Main form data state
+export default function EditTripModal(setCards: any) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const tripId = searchParams.get('trip') ?? null;
   const [formData, setFormData] = useState<Trip | null>(null);
   const { data: session } = useSession();
 
-  // Object to track only changed values
   const [changedData, setChangedData] = useState<Partial<Trip>>({});
 
-  useEffect(() => {
-    if (trip) {
-      console.log("in user effect trip  ")
-      console.log(trip)
-      setFormData(trip);
-      setChangedData({});
-    }
-  }, [trip]);
 
-  if (!formData) return null;
+  useEffect(() => {
+    if (tripId) {
+      fetchTrip(Number(tripId));
+    } else {
+      setFormData(null);
+    }
+  }, [tripId]);
+
+  const fetchTrip = async (id: number) => {
+    try {
+      const trip = await fetchTripData(Number(tripId));
+      setFormData(trip);
+    } catch (err) {
+      console.error('Error fetching trip:', err);
+    }
+  };
 
   // Generic handler to update formData and changedData
   const updateField = <K extends keyof Trip>(key: K, value: Trip[K]) => {
@@ -93,19 +96,36 @@ export default function EditTripModal({ trip, isOpen, onClose }: EditTripModalPr
     console.log("Changed Data to send to backend:", changedData);
   
     try {
-      if (!trip.id) throw new Error("Trip ID missing");
-  
+      if (!tripId) throw new Error("Trip ID missing");
+
       // call server action
-      const updatedTrip = await saveTrip(trip.id, changedData);
+      const updatedTrip = await saveTrip(tripId, changedData);
+
+      setCards((prevCards: UserTrips[]) =>
+        prevCards.map((card) =>
+          card.id == Number(tripId)
+            ? { ...card, ...changedData }
+            : card
+        )
+      );
+
       console.log("Update response:", updatedTrip);
     } catch (err) {
       console.error("Error updating trip:", err);
     }
   
-    onClose();
+    handleClose();
   };
+
+  const handleClose = () => {
+    // setOpen(false);
+    router.replace('/board'); // remove ?trip param
+  };
+
+  if (!formData) return null;
+
   return (
-    <Dialog.Root open={isOpen} onOpenChange={onClose}>
+    <Dialog.Root open={tripId} onOpenChange={handleClose}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
         <Dialog.Content className="fixed editModal top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-xl w-[80vw] h-[90vh] max-w-9xl z-50 overflow-hidden">
@@ -248,7 +268,7 @@ export default function EditTripModal({ trip, isOpen, onClose }: EditTripModalPr
                 <div className="flex items-center mb-3 justify-between">
                   
                   <div className="flex items-center gap-2">
-                    <InviteMemberDialog />
+                    <InviteMemberDialog tripId={formData.id} />
                   </div>
                 </div>
                 <div className=" flex flex-wrap gap-5">
@@ -432,7 +452,7 @@ export default function EditTripModal({ trip, isOpen, onClose }: EditTripModalPr
           {/* Footer */}
           <div className="fixed bottom-0 flex items-center justify-end gap-3 p-6 border-t border-gray-200 footerDiv w-full">
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="px-4 py-2 border-purple-800 border-2 text-gray-700 rounded-md hover:bg-purple-50"
             >
               Cancel
