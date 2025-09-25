@@ -1,22 +1,21 @@
 import "./globals.css";
 
-import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import Script from "next/script";
 
+import ForgotPasswordModal from "@/app/(public)/_components/dialogs/auth/forgot-password-modal";
+import LoginModal from "@/app/(public)/_components/dialogs/auth/login-modal";
+import SignUpModal from "@/app/(public)/_components/dialogs/auth/signup-modal";
 import GoogleAnalyticsScripts from "@/app/_components/google-analytics";
 import SonnarToaster from "@/app/_components/sonner-toaster";
 import { geologica } from "@/app/_config/fonts";
 import { getJsonLd } from "@/app/_config/jsonId";
 import { metadata } from "@/app/_config/metadata";
 import { viewport } from "@/app/_config/viewport";
-import LoginModal from "@/app/(public)/_components/dialogs/auth/login-modal";
-import SignUpModal from "@/app/(public)/_components/dialogs/auth/signup-modal";
-import ForgotPasswordModal from "@/app/(public)/_components/dialogs/auth/forgot-password-modal";
 import { DialogProvider } from "@/context/dialog-context";
 
 import AuthProvider from "@/app/providers/session-provider";
-import Navbar from "@/app/_components/layout/navbar";
 
 export { metadata, viewport };
 
@@ -30,7 +29,7 @@ export default function RootLayout({
       <body className={`${geologica.variable} font-sans antialiased`}>
         <AuthProvider>
           <DialogProvider>
-              <Navbar />
+              {/* <Navbar /> */}
               {children}
               <LoginModal /> 
               <SignUpModal />

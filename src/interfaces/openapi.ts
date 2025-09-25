@@ -124,4 +124,66 @@ export interface ResetPasswordPayload {
   password: string;
 }
 
+// lib/types.ts
+
+export type User = {
+  id: number;
+  name: string;
+};
+
+export type ChecklistItem = {
+  id: number;
+  description: string;
+  is_completed: boolean;
+  created_by: User;
+  completed_by?: User;
+  sequence: number;
+};
+
+export type FileItem = {
+  id: number;
+  file_name: string;
+  filepath: string;
+  file_type: string;
+};
+
+export type CommentItem = {
+  id: number;
+  trip_id: number;
+  data: string;
+  commented_by: User;
+};
+export type LocationItem = {
+  id: number;
+  trip_id: number;
+  name: string;
+  longitude: string;
+  latitude: string;
+  added_by: User;
+};
+
+export type Members = {
+  count: number;
+  users: User[];
+};
+
+export type Trip = {
+  id: number;
+  destination: string;
+  description: string;
+  occasion: string;
+  mode_of_transportation: string | null;
+  members: Members;
+  start_date: string; 
+  end_date: string;   
+  min_budget: number;
+  max_budget: number;
+  budget_per_person: number;
+  status: "inplanning" | "confirmed" | "completed" | "cancelled"; 
+  checklist?: ChecklistItem[];
+  files?: FileItem[];
+  comments?: CommentItem[];
+  locations?: LocationItem[];
+};
+
 

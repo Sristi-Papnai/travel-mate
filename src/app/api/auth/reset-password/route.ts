@@ -9,15 +9,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const { token, password } = body as { token: string; password: string };
 
-  const response: IStandardResponse = {
-    error: true,
-    errors: {},
-    msg: "",
-    data: {},
-  };
-
   if (!token || !password) {
-    response.msg = "Token and password are required";
     return NextResponse.json(
       getErrorResponse({ mail: "Token and password are required" }),
       { status: 404 }
@@ -38,9 +30,6 @@ export async function POST(req: NextRequest) {
 
   // Update user password & invalidate token
   await updateUserPassword(user.id, passwordHash);
-
-  response.error = false;
-  response.msg = "Password reset successfully";
 
   return NextResponse.json(
     getSuccessResponse("Mail sent successfully", {
