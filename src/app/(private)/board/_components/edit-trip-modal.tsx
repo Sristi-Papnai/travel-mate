@@ -18,7 +18,7 @@ import InviteMemberDialog from '@/app/(private)/board/_components/invite-member-
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
-export default function EditTripModal(setCards: any) {
+export default function EditTripModal({ setCards }: { setCards: React.Dispatch<React.SetStateAction<UserTrips[]>> }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const tripId = searchParams.get('trip') ?? null;
