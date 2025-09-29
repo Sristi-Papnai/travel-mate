@@ -3,7 +3,7 @@
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { fetchTripData, saveTrip } from '@/app/actions/trip-actions'; 
+import { createPresignedUpload, fetchTripData, saveTrip } from '@/app/actions/trip-actions'; 
 import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import type { ChecklistItem, Trip, UserTrips } from '@/interfaces/openapi';
@@ -17,6 +17,7 @@ import CommentsTab from '@/app/(private)/board/_components/comments-tab';
 import InviteMemberDialog from '@/app/(private)/board/_components/invite-member-dialog';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import GoogleMaps from '@/app/(private)/board/_components/google-maps';
 
 export default function EditTripModal({ setCards }: { setCards: React.Dispatch<React.SetStateAction<UserTrips[]>> }) {
   const searchParams = useSearchParams();
@@ -77,19 +78,6 @@ export default function EditTripModal({ setCards }: { setCards: React.Dispatch<R
     if (!formData.checklist) return;
     const updatedChecklist = formData.checklist.filter((item) => item.id !== id);
     updateField("checklist", updatedChecklist);
-  };
-
-
-  // Destination handlers
-  const addDestination = (name: string) => {
-    if (!name.trim()) return;
-    const newLocations = [...(formData?.locations || []), { id: Date.now(), name }];
-    updateField('locations' as any, newLocations);
-  };
-
-  const removeDestination = (id: number) => {
-    const newLocations = (formData?.locations || []).filter(loc => loc.id !== id);
-    updateField('locations' as any, newLocations);
   };
 
   const handleSave = async () => {
@@ -357,6 +345,60 @@ export default function EditTripModal({ setCards }: { setCards: React.Dispatch<R
                 </div>
               </div>
 
+              <div className="mb-6">
+                <label className="text-sm font-medium text-gray-700 mb-3 block">Upload Files</label>
+                <input
+                type="file"
+                onChange={async (e) => {
+                if (!e.target.files?.length) return;
+                const file = e.target.files[0];
+                const res = await createPresignedUpload(
+                Number(tripId),
+                file.name,
+                file.type,
+                );
+
+
+                await fetch(res.url, {
+                method: "PUT",
+                body: file,
+                headers: { "Content-Type": file.type },
+                });
+
+
+                router.refresh();
+                }}
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4
+                file:rounded-full file:border-0
+                file:text-sm file:font-semibold
+                file:bg-purple-50 file:text-purple-800
+                hover:file:bg-purple-100"
+                />
+
+
+                {/* Files Table */}
+                <div className="mt-4">
+                <table className="min-w-full divide-y divide-gray-200 border border-gray-200">
+                <thead className="bg-purple-800 text-white">
+                <tr>
+                <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">File Name</th>
+                <th className="px-4 py-2 text-right text-xs font-medium uppercase tracking-wider">Uploaded By  </th>
+                {/* <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Uploaded At</th> */}
+                </tr>
+                </thead>
+                <tbody className="bg-purple-50 divide-y divide-gray-200">
+                {(formData.files || []).map((file) => (
+                <tr key={file.id}>
+                <td className="px-4 py-2 text-sm text-gray-700">{file.file_name}</td>
+                <td className="px-4 py-2 text-sm text-gray-500 text-right">{file.created_by.name}</td>
+                {/* <td className="px-4 py-2 text-sm text-gray-500">{new Date(file.uploaded_at).toLocaleString()}</td> */}
+                </tr>
+                ))}
+                </tbody>
+                </table>
+                </div>
+                </div>
+
             </div>
 
             {/* Right Column - Locations & Map */}
@@ -371,54 +413,11 @@ export default function EditTripModal({ setCards }: { setCards: React.Dispatch<R
                   </Tabs.Trigger>
                 </Tabs.List>
                 <Tabs.Content value="map" className="mt-4">
-                  {/* Locations */}
-                  <div className="mb-4">
-                    <div className="flex gap-2 mb-3">
-                      <div className="flex-1 relative">
-                        <IoSearch size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                        <input
-                          type="text"
-                          placeholder="Find a place..."
-                          className="w-full pl-10 pr-3 py-2 border border-purple-300 rounded-md focus:ring-2 focus:ring-purple-800 focus:border-transparent"
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              addDestination((e.target as HTMLInputElement).value);
-                              (e.target as HTMLInputElement).value = '';
-                            }
-                          }}
-                        />
-                      </div>
-                      <button
-                        onClick={() => {
-                          const input = document.querySelector<HTMLInputElement>('input[placeholder="Find a place..."]');
-                          if (input) {
-                            addDestination(input.value);
-                            input.value = '';
-                          }
-                        }}
-                        className="px-3 py-2 bg-[#5A2D82] text-white rounded-md hover:bg-purple-800"
-                      >
-                        Add
-                      </button>
-                    </div>
-                    <div className="space-y-2">
-                      {(formData.locations || []).map(dest => (
-                        <div key={dest.id} className="flex items-center justify-between p-2 border border-gray-200 rounded-md">
-                          <span className="text-sm text-gray-700">{dest.name}</span>
-                          <button onClick={() => removeDestination(dest.id)} className="p-1 hover:bg-gray-100 rounded text-red-500">
-                            <IoTrash size={14} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="h-64 bg-gray-100 rounded-md flex items-center justify-center border border-gray-200">
-                    <div className="text-center text-gray-500">
-                      <div className="text-sm">Map View</div>
-                      <div className="text-xs mt-1">Interactive map will be displayed here</div>
-                    </div>
-                  </div>
+                  <GoogleMaps
+                    tripId={tripId}
+                    userId={session?.user?.id}
+                    initialLocations={formData.locations}
+                  />
                 </Tabs.Content>
                 <Tabs.Content value="members" className="mt-4">
                 <div className="space-y-4">

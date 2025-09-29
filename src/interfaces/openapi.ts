@@ -172,6 +172,7 @@ export type FileItem = {
   file_path: string | null;
   file_type: string | null;
   created_by: User;
+  uploaded_at: string;
 };
 
 export type CommentItem = {

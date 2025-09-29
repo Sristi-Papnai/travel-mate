@@ -5,7 +5,8 @@ import {
   members,
   checklists,
   comments,
-  users
+  users,
+  files
 } from "@/db/schema/postgres";
 import type { InviteMembersInput, Trip, UserTrips } from "@/interfaces/openapi";
 import { and, eq, inArray } from "drizzle-orm";
@@ -65,6 +66,7 @@ export async function findAllTrips(userId: number): Promise<Trip[]> {
         file_name: f.fileName,
         file_path: f.filePath,
         file_type: f.fileType,
+        uploaded_at: f.uploadedAt,
         created_by: f.user
           ? { id: f.user.id, name: `${f.user.firstName} ${f.user.lastName}`, email: f.user.email ?? undefined }
           : { id: 0, name: "Unknown", email: undefined },
@@ -151,6 +153,7 @@ export async function findAllTrips(userId: number): Promise<Trip[]> {
         file_name: f.fileName,
         file_path: f.filePath,
         file_type: f.fileType,
+        uploaded_at: f.uploadedAt,
         created_by: f.user
           ? { id: f.user.id, name: `${f.user.firstName} ${f.user.lastName}`, email: f.user.email ?? undefined }
           : { id: 0, name: "Unknown", email: undefined },
@@ -230,6 +233,7 @@ export async function findAllTrips(userId: number): Promise<Trip[]> {
       //   file_name: f.fileName,
       //   file_path: f.filePath,
       //   file_type: f.fileType,
+      // uploaded_at: f.uploadedAt,
       //   created_by: f.user
       //     ? { id: f.user.id, name: `${f.user.firstName} ${f.user.lastName}`, email: f.user.email ?? undefined }
       //     : { id: 0, name: "Unknown", email: undefined },
@@ -460,7 +464,7 @@ export async function findAllTrips(userId: number): Promise<Trip[]> {
       try {
         const mail = await sendEmail({
           to: user.email,
-          subject: `You have been invited to ${trip.destination}`,
+          subject: `Travel Mate: You have been invited to trip to - ${trip.destination}`,
           htmlContent : user.plainPassword
                 ? `
                   <h2>Hello ${user.firstName}!</h2>
@@ -487,6 +491,10 @@ export async function findAllTrips(userId: number): Promise<Trip[]> {
 
     // 7️⃣ Return emails of invited users
     return membersToInsert.map(u => u.email);
+  }
+
+  export async function saveTripFiles(data){
+    await db.insert(files).values(data);
   }
 
   
