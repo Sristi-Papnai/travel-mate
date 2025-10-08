@@ -6,7 +6,8 @@ import {
   checklists,
   comments,
   users,
-  files
+  files,
+  savedLocations
 } from "@/db/schema/postgres";
 import type { InviteMembersInput, Trip, UserTrips } from "@/interfaces/openapi";
 import { and, eq, inArray } from "drizzle-orm";
@@ -106,6 +107,7 @@ export async function findAllTrips(userId: number): Promise<Trip[]> {
             completer: true,
           },
         },
+        creator: true,
         files: { with: { user: true } },
         comments: { with: { user: true } },
         savedLocations: { with: { user: true } },
@@ -128,6 +130,9 @@ export async function findAllTrips(userId: number): Promise<Trip[]> {
       max_budget: trip.max_budget,
       budget_per_person: trip.budget_per_person,
       status: trip.status as "inplanning" | "confirmed" | "completed" | "cancelled",
+      created_by: trip.creator
+      ? { id: trip.creator.id, name: `${trip.creator.firstName} ${trip.creator.lastName}`, email: trip.creator.email }
+      : { id: 0, name: "Unknown" },
       members: {
         count: trip.members.length,
         users: trip.members.map((m) => ({
@@ -489,12 +494,84 @@ export async function findAllTrips(userId: number): Promise<Trip[]> {
       }
     }
 
-    // 7️⃣ Return emails of invited users
-    return membersToInsert.map(u => u.email);
+    // 7️⃣ Return all members
+    const tripMembers = await db.query.members.findMany({
+      where: eq(members.tripId, tripId),
+      with: { user: true },
+    });
+  
+    // Format response
+    const formattedMembers = {
+      count: tripMembers.length,
+      users: tripMembers.map((m) => ({
+        id: m.user.id,
+        name: `${m.user.firstName} ${m.user.lastName}`,
+        email: m.user.email,
+      })),
+    };
+  
+    return formattedMembers;
   }
 
   export async function saveTripFiles(data){
     await db.insert(files).values(data);
+  }
+
+  export async function saveTripLocations({
+    tripId,
+    name,
+    latitude,
+    longitude,
+    userId,
+  }: {
+    tripId: number;
+    name: string;
+    latitude: string;
+    longitude: string;
+    userId: number;
+  }){
+
+    try{
+      const inserted = await db.insert(savedLocations).values({
+       tripId,
+       name,
+       latitude,
+       longitude,
+       userId,
+     }).returning();
+
+     console.log("inserted location ")
+     console.log(inserted)
+
+     const location = await db.query.savedLocations.findFirst({
+      where: eq(savedLocations.id, inserted[0].id),
+      with: { user: true },
+    });
+  
+    // Format as desired
+    const new_location = {
+      id: location.id,
+      trip_id: location.tripId,
+      name: location.name,
+      longitude: location.longitude,
+      latitude: location.latitude,
+      added_by: location.user
+        ? {
+            id: location.user.id,
+            name: `${location.user.firstName} ${location.user.lastName}`,
+            email: location.user.email,
+          }
+        : { id: 0, name: "Unknown" },
+    };
+  
+     return {success: true, msg:"Location saved!", new_location: new_location};
+    }
+    catch (error) {
+      console.log("Error in saving location")
+      console.log(error)
+      return  {success: false, msg :"Error in saving location"};
+    }
+
   }
 
   

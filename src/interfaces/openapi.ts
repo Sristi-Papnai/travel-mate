@@ -214,6 +214,7 @@ export type Trip = {
   files: FileItem[];
   comments?: CommentItem[];
   locations?: LocationItem[];
+  created_by: User,
 };
 export type UserTrips = {
   id: number;
