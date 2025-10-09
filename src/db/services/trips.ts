@@ -9,7 +9,7 @@ import {
   files,
   savedLocations
 } from "@/db/schema/postgres";
-import type { InviteMembersInput, Trip, UserTrips } from "@/interfaces/openapi";
+import type { InviteMembersInput, Trip, TripAnalytics, UserTrips } from "@/interfaces/openapi";
 import { and, eq, inArray } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
@@ -93,13 +93,27 @@ export async function findAllTrips(userId: number): Promise<Trip[]> {
     }));
   }
 
-  export async function getTripData(tripId: number): Promise<Trip | null> {
+  export async function getTripData(tripId: number, userId: number): Promise<Trip | null> {
     // Fetch trip with relations
     const tripWithRelations = await db.query.trips.findFirst({
-      where: (trip, { eq }) => eq(trip.id, tripId),
+      where: (trip, { eq, exists, and }) =>
+        and(
+          eq(trip.id, tripId),
+          exists(
+            db
+              .select()
+              .from(members)
+              .where(
+                and(
+                  eq(members.tripId, trip.id),
+                  eq(members.userId, userId)
+                )
+              )
+          )
+        ),
       with: {
         members: {
-          with: { user: true }, // resolve members -> user
+          with: { user: true },
         },
         checklists: {
           with: {
@@ -574,7 +588,75 @@ export async function findAllTrips(userId: number): Promise<Trip[]> {
 
   }
 
+  export async function getTripAnalytics(userId: number): Promise<TripAnalytics> {
+    const userTrips = await db.query.trips.findMany({
+      where: (trips, { exists, eq, and }) =>
+        exists(
+          db
+            .select()
+            .from(members)
+            .where(
+              and(eq(members.tripId, trips.id), eq(members.userId, userId))
+            )
+        ),
+      with: {
+        members: true,
+      },
+    });
   
+    const statusMeta: Record<string, { color: string }> = {
+      completed: { color: "#34D399" },
+      inplanning: { color: "#87CEEB" },
+      confirmed: { color: "#FBBF24" },
+      cancelled: { color: "#EF4444" },
+    };
   
+    const months = [
+      "JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+      "JUL", "AUG", "SEP", "OCT", "NOV", "DEC",
+    ];
+    const currentMonthIndex = new Date().getMonth();
+  
+    // Initialize accumulators
+    const statusCounts: Record<string, number> = {};
+    const monthlySpends: number[] = new Array(12).fill(0);
+  
+    for (const trip of userTrips) {
+      // ---- Status Count ----
+      if (trip.status in statusMeta) {
+        statusCounts[trip.status] = (statusCounts[trip.status] || 0) + 1;
+      }
+  
+      // ---- Trip Spends (Completed only) ----
+      if (trip.status === "completed" && trip.min_budget != null) {
+        const spendPerPerson = trip.min_budget / (trip.members.length || 1);
+        let monthIndex: number;
+  
+        if (trip.start_date) {
+          monthIndex = new Date(trip.start_date as unknown as string).getMonth();
+        } else {
+          monthIndex = (currentMonthIndex + 1) % 12;
+        }
+  
+        monthlySpends[monthIndex] += spendPerPerson;
+      }
+    }
+  
+    // Construct the final response in one go
+    const result: TripAnalytics = {
+      status_count: Object.keys(statusMeta).map((status) => ({
+        name: status,
+        value: statusCounts[status] || 0,
+        color: statusMeta[status].color,
+      })),
+      total_trips: userTrips.length,
+      trip_spends: months.map((month, i) => ({
+        month,
+        spend: Math.round(monthlySpends[i]),
+      })),
+    };
+  
+    return result;
+  }
 
 

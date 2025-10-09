@@ -1,7 +1,7 @@
 "use server"; 
 
 import { authOptions } from "@/app/_libs/utils/auth";
-import { findUserTrips, getTripData, inviteMembersService, saveTripFiles, saveTripLocations, updateTrip } from "@/db/services/trips";
+import { findUserTrips, getTripAnalytics, getTripData, inviteMembersService, saveTripFiles, saveTripLocations, updateTrip } from "@/db/services/trips";
 import type { CommentItem, CreateTripPayload, InviteMembersPayload, Trip, UserTrips } from "@/interfaces/openapi";
 import { getServerSession } from "next-auth";
 import { files, members, savedLocations } from "@/db/schema/postgres";
@@ -37,9 +37,10 @@ export async function fetchUserTrips(): Promise<UserTrips[]> {
 }
 
 export async function fetchTripData(tripId : number): Promise<Trip | null> {
-
+  const session = await getServerSession(authOptions);
+  if (!session) return null;
   // Call your function with the user ID
-  const trip = await getTripData(Number(tripId));
+  const trip = await getTripData(Number(tripId),  session?.user?.id);
 
   return trip;
 }
@@ -140,4 +141,15 @@ export async function deleteTripMember(tripId: number, memberId: number) {
   );
   return true;
 }
+
+export async function tripAnalytics() {
+  const session = await getSession(); 
+  if(!session)
+  return {success: false};
+
+  const result = await getTripAnalytics(session?.user?.id);
+  return {success: true, trip_details: result};
+}
+
+
 

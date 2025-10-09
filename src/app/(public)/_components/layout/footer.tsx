@@ -4,6 +4,7 @@ import Link from "next/link";
 import { MdLocationOn } from "react-icons/md";
 import { FaPhoneAlt } from "react-icons/fa";
 import { IoMdMail } from "react-icons/io";
+import StaticMap from "@/app/(public)/_components/layout/static-map";
 
 export default function Footer() {
   return (
@@ -42,7 +43,7 @@ export default function Footer() {
               <div>
                 <p className="font-semibold">Office</p>
                 <p className="text-gray-400 text-sm">
-                  456 Travel Ave, Sydney NSW 2000 AU
+                  Btm Layout, 2nd Stage, Bangalore
                 </p>
                 <Link href="#" className="text-blue-400">
                   Get Directions
@@ -53,9 +54,7 @@ export default function Footer() {
         </div>
 
         {/* Map Placeholder */}
-        <div className="mt-8 md:mt-0 md:ml-12 bg-gray-800 w-full md:w-96 h-60 flex items-center justify-center">
-          <span className="text-gray-400">Map Placeholder</span>
-        </div>
+          <StaticMap />
       </div>
 
       {/* Links + Newsletter */}

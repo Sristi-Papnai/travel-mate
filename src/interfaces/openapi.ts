@@ -249,3 +249,22 @@ export interface InviteMembersInput {
   emails: string[];
   inviterName: string;
 }
+
+export type TripAnalytics = {
+  status_count: {
+    name: string;
+    value: number;
+    color: string;
+  }[];
+  total_trips: number;
+  trip_spends: {
+    month: string;
+    spend: number;
+  }[];
+}
+
+export type TripAnalyticsResponse = {
+  success: boolean,
+  trip_details?:TripAnalytics
+};
+
