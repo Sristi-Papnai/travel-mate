@@ -1,0 +1,2 @@
+ALTER TABLE "trips" ADD COLUMN "created_by" integer NOT NULL;--> statement-breakpoint
+ALTER TABLE "trips" ADD CONSTRAINT "trips_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;

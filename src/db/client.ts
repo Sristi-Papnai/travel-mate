@@ -1,4 +1,5 @@
 import { env } from "env";
+import * as postgres from "./schema/postgres";
 
 // const DIALECT = env.DB_DIALECT as "postgresql" | "mysql" | "sqlite";
 
@@ -12,7 +13,7 @@ import { env } from "env";
     connectionString: env.DATABASE_URL,
     ssl: env.NEXT_PUBLIC_APP_ENV === "production" || env.NEXT_PUBLIC_APP_ENV === "staging",
   });
-  const db = drizzle(pool);
+  const db = drizzle(pool, { schema: postgres });
   const schema = await import("@/db/schema/postgres");
 // } else if (DIALECT === "mysql") {
 //   const mysql = await import("mysql2/promise");

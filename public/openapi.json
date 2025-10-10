@@ -475,6 +475,75 @@
           }
         }
       }
+    },
+    "/trips": {
+      "get": {
+        "operationId": "get-trips",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Trips"
+        ],
+        "parameters": [],
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "post": {
+        "operationId": "post-trips",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Trips"
+        ],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/trips/{id}": {
+      "put": {
+        "operationId": "put-trips-{id}",
+        "summary": "",
+        "description": "",
+        "tags": [
+          "Trips"
+        ],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
     }
   }
 }
