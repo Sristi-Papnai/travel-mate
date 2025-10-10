@@ -1,9 +1,14 @@
 "use server"; 
 
 import { authOptions } from "@/app/_libs/utils/auth";
-import { findUserTrips, getTripData, inviteMembersService, updateTrip } from "@/db/services/trips";
+import { findUserTrips, getTripData, inviteMembersService, saveTripFiles, saveTripLocations, updateTrip } from "@/db/services/trips";
 import type { CommentItem, CreateTripPayload, InviteMembersPayload, Trip, UserTrips } from "@/interfaces/openapi";
 import { getServerSession } from "next-auth";
+import { files, members, savedLocations } from "@/db/schema/postgres";
+import { GetObjectCommandService, getPresignedUrl } from "@/app/services/S3/s3-service";
+import { db } from "@/db/client";
+import { and, eq, inArray } from "drizzle-orm";
+
 
 
 async function getSession() {
@@ -45,8 +50,94 @@ export async function inviteMembersAction({ tripId, emails }: InviteMembersPaylo
 
   const inviterName = session.user?.name || "Admin";
 
-  const invitedEmails = await inviteMembersService({ tripId, emails, inviterName });
+  const members = await inviteMembersService({ tripId, emails, inviterName });
 
-  return { success: true, msg: "Invites sent", invited: invitedEmails };
+  return { success: true, msg: "Invites sent", members: members };
+}
+
+
+  export async function createPresignedUpload(tripId: number, fileName: string, fileType: string) {
+
+    const key = `trips/${tripId}/${Date.now()}-${fileName}`;
+
+
+    const url = await getPresignedUrl(key, fileType);
+    const session = await getServerSession(authOptions);
+
+    const res =  await saveTripFiles({
+      tripId: tripId,
+      fileName: fileName,
+      filePath: key,
+      fileType: fileType,
+      userId: session?.user?.id,
+    });
+
+
+      return { url, key };
+
+  }
+  export async function getPresignedGetUrl(key: string | null) {
+
+    if(key){
+      const url = GetObjectCommandService(key);
+      return url;
+    }else{
+      return '/';
+    }
+
+  }
+
+
+  export async function fetchTripFiles(tripId: number) {
+
+    // return await db.select().from(files).where(files.tripId.eq(tripId));
+    return [];
+
+  }
+
+  export async function saveLocationAction({
+    tripId,
+    name,
+    latitude,
+    longitude,
+    userId,
+  }: {
+    tripId: number;
+    name: string;
+    latitude: string;
+    longitude: string;
+    userId: number;
+  }) {
+
+    const inserted = await saveTripLocations( 
+       { 
+        tripId,
+        name,
+        latitude,
+        longitude,
+        userId
+      }
+      );
+
+  
+    return inserted;
+  }
+
+
+
+  // Delete location from DB
+export async function deleteTripLocation(tripId: number, locationId: number) {
+  await db.delete(savedLocations).where(
+    and(eq(savedLocations.tripId, tripId), eq(savedLocations.id, locationId))
+  );
+  return true;
+}
+
+// Delete member from DB
+export async function deleteTripMember(tripId: number, memberId: number) {
+  await db.delete(members).where(
+    and(eq(members.tripId, tripId), eq(members.userId, memberId))
+  );
+  return true;
 }
 

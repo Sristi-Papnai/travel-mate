@@ -3,7 +3,7 @@
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { fetchTripData, saveTrip } from '@/app/actions/trip-actions'; 
+import { createPresignedUpload, deleteTripLocation, deleteTripMember, fetchTripData, getPresignedGetUrl, saveTrip } from '@/app/actions/trip-actions'; 
 import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import type { ChecklistItem, Trip, UserTrips } from '@/interfaces/openapi';
@@ -17,6 +17,11 @@ import CommentsTab from '@/app/(private)/board/_components/comments-tab';
 import InviteMemberDialog from '@/app/(private)/board/_components/invite-member-dialog';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import GoogleMaps from '@/app/(private)/board/_components/google-maps';
+import { Popover, PopoverContent, PopoverTrigger } from '@radix-ui/react-popover';
+import { format } from 'path';
+import { Calendar } from '@/components/ui/calendar';
+import DialogLoader from '@/app/_components/layout/dialog-loader';
 
 export default function EditTripModal({ setCards }: { setCards: React.Dispatch<React.SetStateAction<UserTrips[]>> }) {
   const searchParams = useSearchParams();
@@ -24,6 +29,9 @@ export default function EditTripModal({ setCards }: { setCards: React.Dispatch<R
   const tripId = searchParams.get('trip') ?? null;
   const [formData, setFormData] = useState<Trip | null>(null);
   const { data: session } = useSession();
+  const [uploading, setUploading] = useState(false);
+  const [loadingTrip, setLoadingTrip] = useState(false); 
+  const [savingTrip, setSavingTrip] = useState(false); 
 
   const [changedData, setChangedData] = useState<Partial<Trip>>({});
 
@@ -79,48 +87,73 @@ export default function EditTripModal({ setCards }: { setCards: React.Dispatch<R
     updateField("checklist", updatedChecklist);
   };
 
-
-  // Destination handlers
-  const addDestination = (name: string) => {
-    if (!name.trim()) return;
-    const newLocations = [...(formData?.locations || []), { id: Date.now(), name }];
-    updateField('locations' as any, newLocations);
-  };
-
-  const removeDestination = (id: number) => {
-    const newLocations = (formData?.locations || []).filter(loc => loc.id !== id);
-    updateField('locations' as any, newLocations);
-  };
-
   const handleSave = async () => {
-    console.log("Changed Data to send to backend:", changedData);
-  
     try {
       if (!tripId) throw new Error("Trip ID missing");
+      setSavingTrip(true);
 
-      // call server action
       const updatedTrip = await saveTrip(tripId, changedData);
 
       setCards((prevCards: UserTrips[]) =>
         prevCards.map((card) =>
-          card.id == Number(tripId)
-            ? { ...card, ...changedData }
-            : card
+          card.id == Number(tripId) ? { ...card, ...changedData } : card
         )
       );
-
       console.log("Update response:", updatedTrip);
+
+      handleClose();
     } catch (err) {
       console.error("Error updating trip:", err);
+    } finally {
+      setSavingTrip(false);
     }
-  
-    handleClose();
   };
+
 
   const handleClose = () => {
     // setOpen(false);
     router.replace('/board'); // remove ?trip param
   };
+
+  // Delete location handler
+  const handleDeleteLocation = async (locId: number) => {
+    if (!tripId) return;
+
+    try {
+      // Update UI immediately
+      setFormData((prev) => ({
+        ...prev!,
+        locations: prev!.locations?.filter((loc) => loc.id !== locId),
+      }));
+
+      // Call backend
+      await deleteTripLocation(Number(tripId), locId);
+    } catch (err) {
+      console.error("Error deleting location:", err);
+    }
+  };
+
+  // Delete member handler
+  const handleDeleteMember = async (memberId: number) => {
+    if (!tripId) return;
+
+    try {
+      // Update UI immediately
+      setFormData((prev) => ({
+        ...prev!,
+        members: {
+          ...prev!.members,
+          users: prev!.members?.users?.filter((m) => m.id !== memberId),
+        },
+      }));
+
+      // Call backend
+      await deleteTripMember(Number(tripId), memberId);
+    } catch (err) {
+      console.error("Error deleting member:", err);
+    }
+  };
+
 
   if (!formData) return null;
 
@@ -129,6 +162,8 @@ export default function EditTripModal({ setCards }: { setCards: React.Dispatch<R
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
         <Dialog.Content className="fixed editModal top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-xl w-[80vw] h-[90vh] max-w-9xl z-50 overflow-hidden">
+        {/* ✅ Loader Overlays */}
+        {(loadingTrip || savingTrip) && <DialogLoader />}
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-[#48395a]">
             <div className="flex items-center gap-4">
@@ -268,61 +303,65 @@ export default function EditTripModal({ setCards }: { setCards: React.Dispatch<R
                 <div className="flex items-center mb-3 justify-between">
                   
                   <div className="flex items-center gap-2">
-                    <InviteMemberDialog tripId={formData.id} />
+                    <InviteMemberDialog tripId={formData.id} setFormData={setFormData}/>
                   </div>
                 </div>
                 <div className=" flex flex-wrap gap-5">
 
-                  {/* Travel Dates */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Travel Date</label>
-                    <div className="flex items-center gap-2">
-                      <DatePicker
-                        selectsRange
-                        startDate={formData?.start_date ? new Date(formData.start_date) : null}
-                        endDate={formData?.end_date ? new Date(formData.end_date) : null}
-                        onChange={(update: [Date | null, Date | null]) => {
-                          if (!update) return;
-                          const [start, end] = update;
-                          updateField("start_date", start ? start.toISOString().split("T")[0] : "");
-                          updateField("end_date", end ? end.toISOString().split("T")[0] : "");
-                        }}
-                        placeholderText="Select start and end date"
-                        className="text-black lg:w-[220px] w-full flex-1 px-3 py-2 border border-purple-300 rounded-md focus:ring-2 focus:ring-purple-800 focus:border-transparent"
-                      />
-                      <IoCalendar size={16} className="text-gray-500" />
-                    </div>
+                <div className="mb-6 flex flex-col gap-3">
+                {/* Dates Row */}
+                <div className="flex flex-wrap gap-3">
+                  {/* Start Date */}
+                  <div className="flex-1 min-w-[140px]">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                    <input
+                      type="date"
+                      value={formData.start_date || ""}
+                      onChange={(e) => updateField("start_date", e.target.value)}
+                      className="text-black w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
                   </div>
 
-                  {/* Mode of Transport */}
-                  <div className="mb-2">
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">Mode of Transport</label>
-                    <div className="mb-6 w-full">
-                    {/* <label className="text-sm font-medium text-gray-700 mb-2 block">Mode of Transport</label> */}
-                    <DropdownMenu.Root>
-                      <DropdownMenu.Trigger asChild>
-                        <button className="text-sm flex w-full justify-between py-2 px-3 rounded-lg border border-purple-300 hover:border-purple-800 bg-white text-black hover:border-2 hover:bg-purple-50">
-                          {formData?.mode_of_transportation === 'Flight' ? 'Flight' :
-                          formData?.mode_of_transportation === 'Train' ? 'Train' :
-                          'Car'}
-                          <IoIosArrowDown size={16} className="ml-2 text-black" />
-                        </button>
-                      </DropdownMenu.Trigger>
+                  {/* End Date */}
+                  <div className="flex-1 min-w-[140px]">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                    <input
+                      type="date"
+                      value={formData.end_date || ""}
+                      onChange={(e) => updateField("end_date", e.target.value)}
+                      className="text-black w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                </div>
 
-                      <DropdownMenu.Content className="text-sm bg-white rounded-lg border border-purple-300 shadow-md p-2 mt-2 w-full text-black">
-                        {['Flight', 'Train', 'Car'].map((mode) => (
-                          <DropdownMenu.Item
-                            key={mode}
-                            className="cursor-pointer rounded px-3 py-2 hover:bg-purple-50 hover:border hover:border-purple-800"
-                            onSelect={() => updateField('mode_of_transportation', mode)}
-                          >
-                            {mode}
-                          </DropdownMenu.Item>
-                        ))}
-                      </DropdownMenu.Content>
-                    </DropdownMenu.Root>
-                  </div>
-                  </div>
+                {/* Mode of Transport */}
+                <div className="mt-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Mode of Transport</label>
+                  <DropdownMenu.Root>
+                    <DropdownMenu.Trigger asChild>
+                      <button className="text-sm flex w-full justify-between py-2 px-3 rounded-lg border border-gray-300 bg-white text-black hover:border-purple-800 hover:bg-purple-50">
+                        {formData.mode_of_transportation || "Select mode"}
+                        <IoIosArrowDown size={16} className="ml-2 text-black" />
+                      </button>
+                    </DropdownMenu.Trigger>
+
+                    <DropdownMenu.Content className="text-sm bg-white rounded-lg border border-gray-300 shadow-md p-2 mt-2 w-full text-black">
+                      {["Flight", "Train", "Car"].map((mode) => (
+                        <DropdownMenu.Item
+                          key={mode}
+                          className="cursor-pointer rounded px-3 py-2 hover:bg-purple-50 hover:border hover:border-purple-800"
+                          onSelect={() => updateField("mode_of_transportation", mode)}
+                        >
+                          {mode}
+                        </DropdownMenu.Item>
+                      ))}
+                    </DropdownMenu.Content>
+                  </DropdownMenu.Root>
+                </div>
+              </div>
+
+
+
                 </div>
               </div>
 
@@ -357,96 +396,197 @@ export default function EditTripModal({ setCards }: { setCards: React.Dispatch<R
                 </div>
               </div>
 
+              <div className="mb-6">
+                <label className="text-sm font-medium text-gray-700 mb-3 block">Upload Files</label>
+
+                <input
+                  type="file"
+                  disabled={uploading}
+                  onChange={async (e) => {
+                    if (!e.target.files?.length || !tripId) return;
+                    const file = e.target.files[0];
+
+                    try {
+                      setUploading(true); // start loader
+
+                      // 1️⃣ Get presigned URL
+                      const res = await createPresignedUpload(Number(tripId), file.name, file.type);
+
+                      // 2️⃣ Upload to S3
+                      await fetch(res.url, {
+                        method: "PUT",
+                        body: file,
+                        headers: { "Content-Type": file.type },
+                      });
+
+                      // 3️⃣ Add uploaded file to formData.files
+                      const newFile = {
+                        id: Date.now(), // temporary id, replace with real if backend returns
+                        file_name: file.name,
+                        created_by: { id: session?.user?.id, name: session?.user?.name ?? "You" },
+                        file_url: res.url.split("?")[0], // S3 file URL without query params
+                      };
+                      setFormData((prev) => ({
+                        ...prev!,
+                        files: prev?.files ? [...prev.files, newFile] : [newFile],
+                      }));
+                    } catch (err) {
+                      console.error("Upload failed:", err);
+                    } finally {
+                      setUploading(false); // stop loader
+                    }
+                  }}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4
+                            file:rounded-full file:border-0
+                            file:text-sm file:font-semibold
+                            file:bg-purple-50 file:text-purple-800
+                            hover:file:bg-purple-100"
+                />
+
+                {/* Loader */}
+                {uploading && <div className="mt-2 text-sm text-purple-700">Uploading...</div>}
+
+                {/* Files Table */}
+                <div className="mt-4">
+                  <table className="min-w-full divide-y divide-gray-200 border border-gray-200">
+                    <thead className="bg-purple-800 text-white">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">File Name</th>
+                        <th className="px-4 py-2 text-right text-xs font-medium uppercase tracking-wider">Uploaded By</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-purple-50 divide-y divide-gray-200">
+                      {(formData.files || []).map((file) => (
+                        <tr key={file.id} className="hover:bg-purple-100">
+                          <td className="px-4 py-2 text-sm text-gray-700">
+                          <button
+                            onClick={async () => {
+                              const url = await getPresignedGetUrl(file.file_path);
+                              window.open(url, "_blank");
+                            }}
+                            className="hover:underline hover:text-purple-800"
+                          >
+                            {file.file_name}
+                          </button>
+                          </td>
+                          <td className="px-4 py-2 text-sm text-gray-500 text-right">{file.created_by.name}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+
             </div>
 
             {/* Right Column - Locations & Map */}
             <div className="w-1/3 p-6 overflow-y-auto">
               <Tabs.Root defaultValue="map" className="mb-4">
                 <Tabs.List className="flex border-b border-gray-200">
-                  <Tabs.Trigger value="map" className="px-4 py-2 text-sm font-medium text-gray-700 border-b-2 border-transparent data-[state=active]:border-purple-800 data-[state=active]:text-purple-800">
+                  <Tabs.Trigger
+                    value="map"
+                    className="px-4 py-2 text-sm font-medium text-gray-700 border-b-2 border-transparent data-[state=active]:border-purple-800 data-[state=active]:text-purple-800"
+                  >
                     Map View
                   </Tabs.Trigger>
-                  <Tabs.Trigger value="members" className="px-4 py-2 text-sm font-medium text-gray-700 border-b-2 border-transparent data-[state=active]:border-purple-800 data-[state=active]:text-purple-800">
+                  <Tabs.Trigger
+                    value="itinerary"
+                    className="px-4 py-2 text-sm font-medium text-gray-700 border-b-2 border-transparent data-[state=active]:border-purple-800 data-[state=active]:text-purple-800"
+                  >
+                    Itinerary
+                  </Tabs.Trigger>
+                  <Tabs.Trigger
+                    value="members"
+                    className="px-4 py-2 text-sm font-medium text-gray-700 border-b-2 border-transparent data-[state=active]:border-purple-800 data-[state=active]:text-purple-800"
+                  >
                     Members
                   </Tabs.Trigger>
                 </Tabs.List>
+
+                {/* Map View */}
                 <Tabs.Content value="map" className="mt-4">
-                  {/* Locations */}
-                  <div className="mb-4">
-                    <div className="flex gap-2 mb-3">
-                      <div className="flex-1 relative">
-                        <IoSearch size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                        <input
-                          type="text"
-                          placeholder="Find a place..."
-                          className="w-full pl-10 pr-3 py-2 border border-purple-300 rounded-md focus:ring-2 focus:ring-purple-800 focus:border-transparent"
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              addDestination((e.target as HTMLInputElement).value);
-                              (e.target as HTMLInputElement).value = '';
-                            }
-                          }}
-                        />
-                      </div>
-                      <button
-                        onClick={() => {
-                          const input = document.querySelector<HTMLInputElement>('input[placeholder="Find a place..."]');
-                          if (input) {
-                            addDestination(input.value);
-                            input.value = '';
-                          }
-                        }}
-                        className="px-3 py-2 bg-[#5A2D82] text-white rounded-md hover:bg-purple-800"
-                      >
-                        Add
-                      </button>
-                    </div>
-                    <div className="space-y-2">
-                      {(formData.locations || []).map(dest => (
-                        <div key={dest.id} className="flex items-center justify-between p-2 border border-gray-200 rounded-md">
-                          <span className="text-sm text-gray-700">{dest.name}</span>
-                          <button onClick={() => removeDestination(dest.id)} className="p-1 hover:bg-gray-100 rounded text-red-500">
-                            <IoTrash size={14} />
+                  <GoogleMaps
+                    tripId={tripId}
+                    userId={session?.user?.id}
+                    initialLocations={formData.locations}
+                    setFormData={setFormData}
+                  />
+                </Tabs.Content>
+
+                {/* Itinerary */}
+                <Tabs.Content value="itinerary" className="mt-4">
+                  <div className="space-y-3">
+                    {formData.locations?.length ? (
+                      formData.locations.map((loc) => (
+                        <div
+                          key={loc.id}
+                          className="flex items-center justify-between p-3 border rounded-md shadow-sm hover:bg-purple-50 text-black"
+                        >
+                          <span className="text-sm text-gray-700">{loc.name}</span>
+                          <button
+                            className="text-red-500 hover:text-red-700"
+                            onClick={() => handleDeleteLocation(loc.id)}
+                          >
+                            <IoTrashBinOutline size={16} />
                           </button>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="h-64 bg-gray-100 rounded-md flex items-center justify-center border border-gray-200">
-                    <div className="text-center text-gray-500">
-                      <div className="text-sm">Map View</div>
-                      <div className="text-xs mt-1">Interactive map will be displayed here</div>
-                    </div>
+                      ))
+                    ) : (
+                      <div className="text-gray-500 text-sm">No saved locations</div>
+                    )}
                   </div>
                 </Tabs.Content>
+
+                {/* Members */}
                 <Tabs.Content value="members" className="mt-4">
-                <div className="space-y-4">
-                  {(formData.members?.users) ? formData.members?.users?.map((m) => (
-                    <div key={m.id} className="flex items-start space-x-3">
-                      {/* Profile Icon */}
-                      <div className="flex-shrink-0">
-                        <div className="w-10 h-10 rounded-full bg-blue-800 flex items-center justify-center text-white font-bold">
-                          {m.name?.charAt(0) || "U"}
-                        </div>
-                      </div>
+                  <div className="space-y-4">
+                    {formData.members?.users ? (
+                      formData.members.users.map((m) => (
+                        <div key={m.id} className="flex items-start justify-between space-x-3 p-3 border rounded-md shadow-sm hover:bg-purple-50">
+                          <div className="flex items-center space-x-3">
+                            {/* Profile Icon */}
+                            <div className="flex-shrink-0">
+                              <div className="w-10 h-10 rounded-full bg-blue-800 flex items-center justify-center text-white font-bold">
+                                {m.name?.charAt(0) || 'U'}
+                              </div>
+                            </div>
 
-                      {/* Member Info */}
-                      <div className="flex-1">
-                        {/* Name + Email */}
-                        <div className="flex flex-col">
-                          <span className="font-semibold text-gray-900">{m.name}</span>
-                          <span className="text-xs text-gray-500">{m.email}</span>
-                        </div>
-                      </div>
-                    </div>
-                  )) : ( <div> No members </div>)
-                  }
-                </div>
-              </Tabs.Content>
+                            {/* Member Info */}
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-gray-900">{m.name}</span>
+                              <span className="text-xs text-gray-500">{m.email}</span>
+                            </div>
+                          </div>
 
+                          <div className="flex items-center gap-2">
+                            {/* Tag */}
+                            {formData.created_by?.id === m.id ? (
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-800">
+                                  Creator
+                                </span>
+                              ) : (
+                                <button
+                                  className="text-red-500 hover:text-red-700"
+                                  onClick={() => handleDeleteMember(m.id)}
+                                >
+                                  <IoTrashBinOutline size={16} />
+                                </button>
+                              )}
+                           
+
+                            
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div>No members</div>
+                    )}
+                  </div>
+                </Tabs.Content>
               </Tabs.Root>
             </div>
+
           </div>
 
           {/* Footer */}
@@ -458,7 +598,7 @@ export default function EditTripModal({ setCards }: { setCards: React.Dispatch<R
               Cancel
             </button>
             <button onClick={handleSave} className="px-4 py-2 bg-[#5A2D82] text-white rounded-md hover:bg-purple-800">
-              Save
+            {savingTrip ? "Saving..." : "Save"}
             </button>
           </div>
         </Dialog.Content>
