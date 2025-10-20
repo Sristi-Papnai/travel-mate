@@ -31,21 +31,22 @@ export default function Card({ card }: CardProps) {
     router.replace(`/board?trip=${card.id}`);
   };
 
-  function formatTripDates(startDate: string, endDate: string) {
+  function formatTripDates(startDate: string | null, endDate: string | null) {
     const options: Intl.DateTimeFormatOptions = { day: "2-digit", month: "short" };
   
-    const start = new Date(startDate).toLocaleDateString("en-US", options);
-    const end = new Date(endDate).toLocaleDateString("en-US", options);
+    const start = startDate ? new Date(startDate).toLocaleDateString("en-US", options) : 'N/A';
+    const end = endDate ? new Date(endDate).toLocaleDateString("en-US", options) : 'N/A';
   
     return `${start} - ${end}`;
   }
+  
 
   function calculateProgress(checklist: { is_completed: boolean }[]) {
     if (!checklist || checklist.length === 0) return 0;
     const completed = checklist.filter(item => item.is_completed).length;
     return Math.round((completed / checklist.length) * 100);
   }
-  const isShared = session?.user?.id != card.created_by.id;
+  const isShared = session?.user?.id !== undefined && session.user.id.toString() !== card.created_by.id.toString();
 
   return (
     <div

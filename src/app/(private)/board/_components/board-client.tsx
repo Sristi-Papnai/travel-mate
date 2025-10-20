@@ -5,7 +5,7 @@ import Card from '@/app/(private)/board/_components/card';
 import Column from '@/app/(private)/board/_components/column';
 import EditTripModal from '@/app/(private)/board/_components/edit-trip-modal';
 import { saveTrip } from '@/app/actions/trip-actions';
-import type { UserTrips } from '@/interfaces/openapi';
+import type { CommentItem, CreateTripPayload, UserTrips } from '@/interfaces/openapi';
 import {
   defaultDropAnimationSideEffects,
   DndContext,
@@ -34,14 +34,19 @@ export default function BoardClient({ initialCards }: BoardClientProps) {
 
   const filteredCards = useMemo(() => {
     return cards.filter((card) => {
-      if (selectedFilter === "My Trips" && card.created_by.id != session?.user?.id) return false;
-      if (selectedFilter === "Shared Trips" && card.created_by.id == session?.user?.id) return false;
-      if (searchQuery.trim() != "" && card.destination && !card.destination.toLowerCase().includes(searchQuery.toLowerCase())) {
+      const createdById = (card.created_by as any)?.id; // cast to any to bypass TS check
+  
+      if (selectedFilter === "My Trips" && createdById !== session?.user?.id) return false;
+      if (selectedFilter === "Shared Trips" && createdById === session?.user?.id) return false;
+  
+      if (searchQuery.trim() !== "" && card.destination && !card.destination.toLowerCase().includes(searchQuery.toLowerCase())) {
         return false;
       }
+  
       return true;
     });
-  }, [cards, selectedFilter, searchQuery, session?.user?.id]);
+  }, [cards, selectedFilter, searchQuery, session]);
+  
 
   useEffect(() => {
     console.log('Cards state updated:', cards);
@@ -49,7 +54,7 @@ export default function BoardClient({ initialCards }: BoardClientProps) {
 
   const columns = ['inplanning', 'confirmed', 'completed', 'cancelled'];
 
-  const findCard = (id: string) => filteredCards.find((c) => c.id == id);
+  const findCard = (id: string) => filteredCards.find((c) => c.id === Number(id));
 
   function handleDragStart(event: any) {
     setActiveId(event.active.id);
@@ -68,7 +73,9 @@ export default function BoardClient({ initialCards }: BoardClientProps) {
         setCards((prev) =>
           prev.map((c) => (c.id === active.id ? { ...c, status: overCard.status } : c))
         );
-        updateTripInDB(activeCard?.id, { status: overCard.status });
+        if (activeCard?.id !== undefined) {
+          updateTripInDB(activeCard?.id, { status: overCard.status });
+        }
       } else {
         const prev = [...cards];
         const globalOldIndex = prev.findIndex((c) => c.id === active.id);
@@ -77,14 +84,19 @@ export default function BoardClient({ initialCards }: BoardClientProps) {
       }
     } else {
       const overColumn = over.id;
-      if (columns.includes(overColumn) && activeCard.status !== overColumn) {
+      if (columns.includes(overColumn) && activeCard?.status !== overColumn) {
         setCards((prev) => prev.map((c) => (c.id === active.id ? { ...c, status: overColumn } : c)));
-        updateTripInDB(activeCard.id, { status: overColumn });
+        if (activeCard?.id !== undefined) {
+          updateTripInDB(activeCard?.id, { status: overColumn });
+        }
       }
     }
   }
 
-  const updateTripInDB = async (tripId, data) => {
+  const updateTripInDB = async (
+    tripId: number,
+    data: Partial<CreateTripPayload> | CommentItem
+  ) => {
     await saveTrip(tripId, data);
   };
 

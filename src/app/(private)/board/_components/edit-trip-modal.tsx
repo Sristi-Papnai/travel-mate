@@ -6,22 +6,41 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { createPresignedUpload, deleteTripLocation, deleteTripMember, fetchTripData, getPresignedGetUrl, saveTrip } from '@/app/actions/trip-actions'; 
 import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
-import type { ChecklistItem, Trip, UserTrips } from '@/interfaces/openapi';
+import type { ChecklistItem, CreateTripPayload, Trip, User, UserTrips } from '@/interfaces/openapi';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import * as Tabs from '@radix-ui/react-tabs';
 import Link from 'next/link';
 import { IoIosArrowDown } from 'react-icons/io';
-import { IoAdd, IoCalendar, IoCheckmark, IoClose, IoSearch, IoTrash, IoTrashBinOutline } from 'react-icons/io5';
+import { IoAdd, IoCheckmark, IoClose, IoTrashBinOutline } from 'react-icons/io5';
 
 import CommentsTab from '@/app/(private)/board/_components/comments-tab';
 import InviteMemberDialog from '@/app/(private)/board/_components/invite-member-dialog';
-import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import GoogleMaps from '@/app/(private)/board/_components/google-maps';
-import { Popover, PopoverContent, PopoverTrigger } from '@radix-ui/react-popover';
-import { format } from 'path';
-import { Calendar } from '@/components/ui/calendar';
 import DialogLoader from '@/app/_components/layout/dialog-loader';
+
+const sanitizeTripData = (data: Partial<Trip>): Partial<CreateTripPayload> => ({
+  destination: data.destination ?? undefined,
+  description: data.description ?? undefined,
+  occasion: data.occasion ?? undefined,
+  members: data.members?.count ?? undefined,
+  start_date: data.start_date ?? undefined,
+  end_date: data.end_date ?? undefined,
+  min_budget: data.min_budget ?? undefined,
+  max_budget: data.max_budget ?? undefined,
+  status: data.status,
+  user: data.created_by, // assuming you want to keep the same user object
+});
+
+export type FileItem = {
+  id: number;
+  file_name: string | null;
+  file_path: string | null;
+  file_type: string | null;
+  created_by: User;
+  uploaded_at: string;
+};
+
 
 export default function EditTripModal({ setCards }: { setCards: React.Dispatch<React.SetStateAction<UserTrips[]>> }) {
   const searchParams = useSearchParams();
@@ -30,7 +49,7 @@ export default function EditTripModal({ setCards }: { setCards: React.Dispatch<R
   const [formData, setFormData] = useState<Trip | null>(null);
   const { data: session } = useSession();
   const [uploading, setUploading] = useState(false);
-  const [loadingTrip, setLoadingTrip] = useState(false); 
+  const [loadingTrip] = useState(false); 
   const [savingTrip, setSavingTrip] = useState(false); 
 
   const [changedData, setChangedData] = useState<Partial<Trip>>({});
@@ -38,13 +57,13 @@ export default function EditTripModal({ setCards }: { setCards: React.Dispatch<R
 
   useEffect(() => {
     if (tripId) {
-      fetchTrip(Number(tripId));
+      fetchTrip();
     } else {
       setFormData(null);
     }
   }, [tripId]);
 
-  const fetchTrip = async (id: number) => {
+  const fetchTrip = async () => {
     try {
       const trip = await fetchTripData(Number(tripId));
       setFormData(trip);
@@ -55,13 +74,16 @@ export default function EditTripModal({ setCards }: { setCards: React.Dispatch<R
 
   // Generic handler to update formData and changedData
   const updateField = <K extends keyof Trip>(key: K, value: Trip[K]) => {
-    setFormData({ ...formData, [key]: value });
+    // Only update if value is not undefined when key is 'id'
+    if (key === "id" && value === undefined) return;
+  
+    setFormData({ ...formData, [key]: value } as Trip);
     setChangedData({ ...changedData, [key]: value });
   };
 
   // Checklist handlers
   const toggleChecklistItem = (id: number) => {
-    if (!formData.checklist) return;
+    if (!formData?.checklist) return;
     const newChecklist = formData.checklist.map(item =>
       item.id === id ? { ...item, is_completed: !item.is_completed } : item
     );
@@ -74,15 +96,15 @@ export default function EditTripModal({ setCards }: { setCards: React.Dispatch<R
       id: Date.now(),
       description: text,
       is_completed: false,
-      created_by: { id: session?.user?.id, name: session?.user?.name ?? null },
-      sequence: formData.checklist ? formData.checklist.length + 1 : 1,
+      created_by: {id: Number(session?.user?.id), name: session?.user?.name ?? '' },
+      sequence: formData?.checklist ? formData.checklist.length + 1 : 1,
     };
-    updateField('checklist', formData.checklist ? [...formData.checklist, newItem] : [newItem]);
+    updateField('checklist', formData?.checklist ? [...formData.checklist, newItem] : [newItem]);
   };
 
   // ✅ Delete Checklist Item
   const deleteChecklistItem = (id: number) => {
-    if (!formData.checklist) return;
+    if (!formData?.checklist) return;
     const updatedChecklist = formData.checklist.filter((item) => item.id !== id);
     updateField("checklist", updatedChecklist);
   };
@@ -92,13 +114,26 @@ export default function EditTripModal({ setCards }: { setCards: React.Dispatch<R
       if (!tripId) throw new Error("Trip ID missing");
       setSavingTrip(true);
 
-      const updatedTrip = await saveTrip(tripId, changedData);
-
+      const updatedTrip = await saveTrip(Number(tripId), sanitizeTripData(changedData));
       setCards((prevCards: UserTrips[]) =>
-        prevCards.map((card) =>
-          card.id == Number(tripId) ? { ...card, ...changedData } : card
-        )
+        prevCards.map((card) => {
+          if (card.id !== Number(tripId)) return card;
+      
+          // Extract members count safely
+          const membersCount =
+            typeof changedData.members === "object"
+              ? changedData.members.count
+              : changedData.members ?? card.members; // fallback to existing number
+      
+          return {
+            ...card,
+            ...changedData,
+            members: membersCount, // always a number
+          } as UserTrips;
+        })
       );
+      
+      
       console.log("Update response:", updatedTrip);
 
       handleClose();
@@ -158,7 +193,7 @@ export default function EditTripModal({ setCards }: { setCards: React.Dispatch<R
   if (!formData) return null;
 
   return (
-    <Dialog.Root open={tripId} onOpenChange={handleClose}>
+    <Dialog.Root open={!!tripId} onOpenChange={handleClose}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
         <Dialog.Content className="fixed editModal top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-xl w-[80vw] h-[90vh] max-w-9xl z-50 overflow-hidden">
@@ -215,10 +250,11 @@ export default function EditTripModal({ setCards }: { setCards: React.Dispatch<R
                 <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
                 <input
                   type="text"
-                  value={formData.destination}
+                  value={formData.destination ?? ""}
                   onChange={(e) => updateField('destination', e.target.value)}
-                  className=" text-black w-full px-3 py-2 border border-purple-300 rounded-md focus:ring-2 focus:ring-purple-800 focus:border-transparent"
+                  className="text-black w-full px-3 py-2 border border-purple-300 rounded-md focus:ring-2 focus:ring-purple-800 focus:border-transparent"
                 />
+
               </div>
 
               {/* Description */}
@@ -420,16 +456,24 @@ export default function EditTripModal({ setCards }: { setCards: React.Dispatch<R
                       });
 
                       // 3️⃣ Add uploaded file to formData.files
-                      const newFile = {
-                        id: Date.now(), // temporary id, replace with real if backend returns
-                        file_name: file.name,
-                        created_by: { id: session?.user?.id, name: session?.user?.name ?? "You" },
-                        file_url: res.url.split("?")[0], // S3 file URL without query params
+                      const newFile: FileItem = {
+                        id: Date.now(),
+                        file_name: res.key.split("/").pop() ?? "unknown", // derive from S3 key
+                        file_path: res.url.split("?")[0], // this is required by FileItem
+                        file_type: "png", // or null if unknown
+                        created_by: {
+                          id: Number(session?.user?.id) || 0,
+                          name: session?.user?.name ?? "Unknown",
+                          email: session?.user?.email ?? undefined,
+                        },
+                        uploaded_at: new Date().toISOString(), // required field
                       };
+                      
                       setFormData((prev) => ({
                         ...prev!,
                         files: prev?.files ? [...prev.files, newFile] : [newFile],
                       }));
+                      
                     } catch (err) {
                       console.error("Upload failed:", err);
                     } finally {
@@ -507,12 +551,22 @@ export default function EditTripModal({ setCards }: { setCards: React.Dispatch<R
                 {/* Map View */}
                 <Tabs.Content value="map" className="mt-4">
                   <GoogleMaps
-                    tripId={tripId}
-                    userId={session?.user?.id}
-                    initialLocations={formData.locations}
+                    tripId={Number(tripId)}
+                    userId={Number(session?.user?.id ?? 0)}
+                    initialLocations={
+                      formData.locations?.map(loc => ({
+                        id: loc.id,
+                        name: loc.name ?? "",
+                        latitude: loc.latitude ?? "",
+                        longitude: loc.longitude ?? "",
+                        added_by: loc.added_by,
+                      })) || []
+                    }
                     setFormData={setFormData}
                   />
                 </Tabs.Content>
+
+
 
                 {/* Itinerary */}
                 <Tabs.Content value="itinerary" className="mt-4">

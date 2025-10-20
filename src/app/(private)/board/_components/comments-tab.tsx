@@ -31,23 +31,24 @@ export default function CommentsTab({ tripId, formData, setFormData }: CommentsT
 
     try {
       // Call server action to save comment
-      const newCommentItem: CommentItem = {
-        id: Date.now(), // temporary ID, real ID comes from DB
-        trip_id: tripId,
-        data: newComment,
-        commented_by: {
-          id: session?.user?.id, 
-          name: session?.user?.name, 
-          email: session?.user?.email, 
-        },
-        created_at: Date.now()
-      };
+      if (!session?.user?.id) return; // don’t save if no user ID
 
+        const newCommentItem: CommentItem = {
+          id: Date.now(),
+          trip_id: tripId,
+          data: newComment,
+          commented_by: {
+            id: Number(session.user.id),
+            name: session.user.name || "Unknown",
+            email: session.user.email || "",
+          },
+          created_at: new Date().toISOString()
+      };
       console.log(newCommentItem)
       // Optionally you can call saveTrip with a structure like:
       const updateDbComment = await saveTrip(tripId, {
         comments: [newCommentItem], 
-      });
+      } as any);
 
       // Update UI immediately
       if(updateDbComment){
@@ -103,7 +104,7 @@ export default function CommentsTab({ tripId, formData, setFormData }: CommentsT
                 <div className="flex flex-col">
                   <span className="font-semibold text-gray-900">{c.commented_by?.name}</span>
                   <span className="text-xs text-gray-500">
-                    {new Date(c.created_at).toLocaleString()}
+                    {c.created_at ? new Date(c.created_at).toLocaleString() : ""}
                   </span>
                 </div>
 

@@ -17,7 +17,7 @@ async function getSession() {
 }
 
 
-export async function saveTrip(tripId: number, data: CreateTripPayload | CommentItem) {
+export async function saveTrip(tripId: number, data: Partial<CreateTripPayload> | CommentItem) {
   if (!tripId) throw new Error("Trip ID missing");
   const updated = await updateTrip(tripId, data);
   return updated;

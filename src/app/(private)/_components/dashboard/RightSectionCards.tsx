@@ -58,8 +58,9 @@ export default function RightSectionCards() {
 
 
   // Use data or fallback if empty
-  const hasStatusData = userTripAnalytics?.trip_details?.total_trips > 0;
-  const hasChartData = userTripAnalytics?.trip_details?.trip_spends?.length > 0;
+  const hasStatusData = (userTripAnalytics?.trip_details?.total_trips ?? 0) > 0;
+  const hasChartData = (userTripAnalytics?.trip_details?.trip_spends?.length ?? 0) > 0;
+  
 
   const data = hasStatusData
     ? userTripAnalytics?.trip_details?.status_count
@@ -99,7 +100,7 @@ export default function RightSectionCards() {
                       </text>
                     )}
                   >
-                    {data.map((entry, index) => (
+                    {data?.map((entry, index) => (
                       <Cell key={index} fill={entry.color} />
                     ))}
                   </Pie>
@@ -110,7 +111,7 @@ export default function RightSectionCards() {
 
             {/* Legend */}
             <div className="flex flex-col gap-2">
-              {total_trips ? data.map((item) => (
+              {total_trips ? data?.map((item) => (
                 <div key={item.name} className="flex items-center gap-2">
                   <span
                     className="w-3 h-3 rounded-full"

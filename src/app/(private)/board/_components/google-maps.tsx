@@ -124,11 +124,12 @@ export default function GoogleMaps({
           setPinnedMarker(marker);
           setPinnedCoords(coords);
 
-          marker.addListener("dragend", (event) => {
+          marker.addListener("dragend", (event: google.maps.MapMouseEvent) => {
             if (event.latLng) {
               setPinnedCoords({ lat: event.latLng.lat(), lng: event.latLng.lng() });
             }
           });
+          
         });
       }
     });
@@ -146,11 +147,16 @@ export default function GoogleMaps({
       longitude: String(searchPlace.lng),
     });
 
-    if(saved.success){
-      setFormData((prev) => ({
-        ...prev,
-        locations: [...(prev.locations || []), saved.new_location],
-      }));
+    if(saved.success && saved.new_location){
+      setFormData((prev) => {
+        if (!prev) return prev; // do nothing if prev is null
+        return {
+          ...prev,
+          locations: [...(prev.locations || []), saved.new_location],
+        };
+      });
+      
+      
 
       console.log("saved location setfordata")
       console.log(saved)
@@ -192,11 +198,14 @@ export default function GoogleMaps({
       latitude: String(pinnedCoords.lat),
       longitude: String(pinnedCoords.lng),
     });
-     if(saved.success){
-      setFormData((prev) => ({
-        ...prev,
-        locations: [...(prev.locations || []), saved.new_location],
-      }));
+    if (saved.success && saved.new_location) {
+      setFormData((prev) => {
+        if (!prev) return prev; // handle null safely
+        return {
+          ...prev,
+          locations: [...(prev.locations || []), saved.new_location],
+        };
+      });
       // Add permanent red marker
       const marker = createMarker(map, pinnedCoords, {
         icon: "http://maps.google.com/mapfiles/ms/icons/red-dot.png",
