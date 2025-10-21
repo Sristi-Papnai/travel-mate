@@ -17,6 +17,7 @@ import bcrypt from "bcrypt";
 export async function findAllTrips(userId: number): Promise<Trip[]> {
     const allTrips = await db.query.trips.findMany({
         with: {
+          creator: true,
           members: { with: { user: true } },
           checklists: { with: { creator: true, completer: true } },
           files: { with: { user: true } },
@@ -36,12 +37,15 @@ export async function findAllTrips(userId: number): Promise<Trip[]> {
       description: t.description,
       occasion: t.occasion,
       mode_of_transportation: t.mode_of_transportation,
-      start_date: t.start_date,
-      end_date: t.end_date,
+      start_date: t.start_date ?? "",
+      end_date: t.end_date ?? "",
       min_budget: t.min_budget,
       max_budget: t.max_budget,
       budget_per_person: t.budget_per_person,
       status: t.status as "inplanning" | "confirmed" | "completed" | "cancelled",
+      created_by: t.creator
+      ? { id: t.creator.id, name: `${t.creator.firstName} ${t.creator.lastName}`, email: t.creator.email ?? "" }
+      : { id: 0, name: "Unknown" },
       members: {
         count: t.members.length,
         users: t.members.map((m) => ({
@@ -67,7 +71,7 @@ export async function findAllTrips(userId: number): Promise<Trip[]> {
         file_name: f.fileName,
         file_path: f.filePath,
         file_type: f.fileType,
-        uploaded_at: f.uploadedAt,
+        uploaded_at: f.uploadedAt ? f.uploadedAt : "",
         created_by: f.user
           ? { id: f.user.id, name: `${f.user.firstName} ${f.user.lastName}`, email: f.user.email ?? undefined }
           : { id: 0, name: "Unknown", email: undefined },
@@ -172,16 +176,16 @@ export async function findAllTrips(userId: number): Promise<Trip[]> {
         file_name: f.fileName,
         file_path: f.filePath,
         file_type: f.fileType,
-        uploaded_at: f.uploadedAt,
+        uploaded_at: f.uploadedAt ? f.uploadedAt : "",
         created_by: f.user
-          ? { id: f.user.id, name: `${f.user.firstName} ${f.user.lastName}`, email: f.user.email ?? undefined }
+          ? { id: f.user.id, name: `${f.user.firstName} ${f.user.lastName}`, email: f.user.email ?? "" }
           : { id: 0, name: "Unknown", email: undefined },
       })),
       comments: trip.comments.map((c) => ({
         id: c.id,
         trip_id: trip.id,
         data: c.data,
-        created_at: c.createdAt,
+        created_at: c.createdAt ? c.createdAt : "",
         commented_by: c.user
           ? { id: c.user.id, name: `${c.user.firstName} ${c.user.lastName}`, email: c.user.email }
           : { id: 0, name: "Unknown" },
@@ -399,36 +403,35 @@ export async function findAllTrips(userId: number): Promise<Trip[]> {
     }
   };
 
-  export async function inviteMembersService({ tripId, emails, inviterName }: InviteMembersInput) {
-    // 0️⃣ Sanity checks
+  export async function inviteMembersService(input: InviteMembersInput) {
+    let { tripId, emails } = input;
+  
+    // Ensure tripId is number
+    if (typeof tripId === "object" && "tripId" in tripId) {
+      tripId = (tripId as { tripId: number }).tripId;
+    }
+  
     if (!tripId || emails.length === 0) return [];
-
-    // Ensure tripId is a number
-    if (typeof tripId === "object" && tripId?.tripId) tripId = tripId.tripId;
-
-    console.log("inviteMembersService")
-    console.log("tripId")
-    console.log(tripId)
-
-    // 1️⃣ Fetch existing users
+  
+    // Fetch existing users
     const existingUsers = await db.select().from(users).where(inArray(users.email, emails));
     const existingEmails = existingUsers.map(u => u.email);
-
-    // 2️⃣ Create missing users
+  
+    // Create missing users
     const newUsersData = emails
       .filter(email => !existingEmails.includes(email))
       .map(email => {
         const [first, last] = email.split("@")[0].split(".");
         const password = Math.random().toString(36).slice(-8);
         return {
-          firstName: first?.charAt(0).toUpperCase() + (first?.slice(1) || ""),
-          lastName: last?.charAt(0).toUpperCase() + (last?.slice(1) || ""),
+          firstName: first?.[0].toUpperCase() + (first?.slice(1) || ""),
+          lastName: last?.[0].toUpperCase() + (last?.slice(1) || ""),
           email,
           password: bcrypt.hashSync(password, 10),
           plainPassword: password,
         };
       });
-
+  
     let newUsers: (typeof newUsersData[0] & { id: number })[] = [];
     if (newUsersData.length > 0) {
       const inserted = await db.insert(users).values(
@@ -439,95 +442,70 @@ export async function findAllTrips(userId: number): Promise<Trip[]> {
           password: u.password,
         }))
       ).returning();
-
-      newUsers = inserted.map((u, i) => ({ ...u, plainPassword: newUsersData[i].plainPassword }));
+    
+      newUsers = inserted.map((u, i) => ({
+        ...u,
+        password: u.password || newUsersData[i].password,
+        plainPassword: newUsersData[i].plainPassword
+      }));
     }
-
-
-
+    
+  
     const allUsers = [...existingUsers, ...newUsers];
-
-    // 3️⃣ Fetch existing trip members
-    let existingMembers: { userId: number }[] = [];
-    if (allUsers.length > 0) {
-      existingMembers = await db.select().from(members).where(
-        and(
-          eq(members.tripId, tripId),
-          inArray(members.userId, allUsers.map(u => u.id))
-        )
-      );
-    }
+  
+    // Fetch existing trip members
+    const existingMembers = await db.select().from(members).where(
+      and(
+        eq(members.tripId, tripId),
+        inArray(members.userId, allUsers.map(u => u.id))
+      )
+    );
     const existingMemberUserIds = existingMembers.map(m => m.userId);
-
-    // 4️⃣ Add new members
-    const membersToInsert = allUsers.filter(u => !existingMemberUserIds.includes(u.id));
-
-    console.log("membersToInsert")
-    console.log(membersToInsert)
+  
+    // Add new members
+    const membersToInsert: any = allUsers.filter(u => !existingMemberUserIds.includes(u.id));
     if (membersToInsert.length > 0) {
       await db.insert(members).values(
-        membersToInsert.map(u => ({
+        membersToInsert.map((u: any) => ({
           userId: u.id,
           tripId,
-          roleId: 2, // normal member
+          roleId: 2,
         }))
       );
     }
-
-    // 5️⃣ Fetch trip details once
-    const trip = await db.select().from(trips).where(eq(trips.id, tripId)).limit(1).then(r => r[0]);
-    if (!trip) return [];
-
-    // 6️⃣ Send invite emails
+  
+    // Send invite emails
     for (const user of membersToInsert) {
       try {
-        const mail = await sendEmail({
+        await sendEmail({
           to: user.email,
-          subject: `Travel Mate: You have been invited to trip to - ${trip.destination}`,
-          htmlContent : user.plainPassword
-                ? `
-                  <h2>Hello ${user.firstName}!</h2>
-                  <p>${inviterName} invited you to join the trip on Travel Mate: <strong>${trip.destination}</strong></p>
-                  <p>Your login credentials:</p>
-                  <p>Email: ${user.email}</p>
-                  <p>Password: ${user.plainPassword}</p>
-                  <p>Please login and update your password.</p>
-                `
-                : `
-                  <h2>Hello ${user.firstName}!</h2>
-                  <p>${inviterName} invited you to join the trip on Travel Mate: <strong>${trip.destination}</strong></p>
-                  <p>You already have an account. Welcome!</p>
-                `
-                });
-
-        if (!mail.success) {
-          console.error(`Failed to send invite email to ${user.email}`);
-        }
+          subject: `Travel Mate: You have been invited to trip - ${tripId}`,
+          htmlContent: user.plainPassword
+            ? `<p>Hello ${user.firstName}, you are invited! Email: ${user.email}, Password: ${user.plainPassword}</p>`
+            : `<p>Hello ${user.firstName}, you are invited!</p>`,
+        });
       } catch (err) {
         console.error(`Error sending invite to ${user.email}:`, err);
       }
     }
-
-    // 7️⃣ Return all members
+  
     const tripMembers = await db.query.members.findMany({
       where: eq(members.tripId, tripId),
       with: { user: true },
     });
   
-    // Format response
-    const formattedMembers = {
+    return {
       count: tripMembers.length,
-      users: tripMembers.map((m) => ({
+      users: tripMembers.map(m => ({
         id: m.user.id,
         name: `${m.user.firstName} ${m.user.lastName}`,
-        email: m.user.email,
+        email: m.user.email ?? "",
       })),
     };
-  
-    return formattedMembers;
   }
+  
 
-  export async function saveTripFiles(data){
+  export async function saveTripFiles(data: any){
     await db.insert(files).values(data);
   }
 
@@ -563,6 +541,11 @@ export async function findAllTrips(userId: number): Promise<Trip[]> {
     });
   
     // Format as desired
+    if (!location) {
+      // Handle undefined location safely
+      return { success: false, msg: "Location not found after insertion" };
+    }
+
     const new_location = {
       id: location.id,
       trip_id: location.tripId,

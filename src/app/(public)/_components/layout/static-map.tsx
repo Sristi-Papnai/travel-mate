@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { loadGoogleMaps, createMap, createMarker } from "@/app/services/google-maps/maps";
 
 export default function StaticMap() {
   const mapRef = useRef<HTMLDivElement>(null);
-  const [map, setMap] = useState<google.maps.Map | null>(null);
+  // const [map, setMap] = useState<google.maps.Map | null>(null);
 
   useEffect(() => {
     loadGoogleMaps().then(() => {
@@ -18,7 +18,7 @@ export default function StaticMap() {
           zoom: 12, // city-level zoom
           disableDefaultUI: true, // optional, removes map controls
         });
-        setMap(m);
+        // setMap(m);
 
         // Add marker at Bangalore
         createMarker(m, bangalore, {

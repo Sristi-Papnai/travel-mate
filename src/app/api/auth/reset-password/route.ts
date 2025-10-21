@@ -1,6 +1,5 @@
 // app/api/auth/reset-password/route.ts
 import { findUserByValidToken, updateUserPassword } from "@/db/services/users";
-import type { IStandardResponse } from "@/db/types";
 import { NextResponse, type NextRequest } from "next/server";
 import bcrypt from "bcrypt";
 import { getErrorResponse, getSuccessResponse } from "@/db/utils/response";

@@ -63,10 +63,12 @@ export default function TripForm({ session }: { session: Session | null }) {
     const newErrors: Record<string, string> = {};
 
     stepFields.forEach((f) => {
-      if (f.required && !formData[f.key]) {
-        newErrors[f.key] = `${f.label} is required`;
+      const key = f.key as keyof typeof formData;
+      if (f.required && !formData[key]) {
+        newErrors[key as string] = `${f.label} is required`;
       }
     });
+    
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -95,7 +97,7 @@ export default function TripForm({ session }: { session: Session | null }) {
     setLoading(false);
 
     if (!response.error) {
-      setTripId(response?.data?.trip?.id)
+      setTripId((response as any)?.data?.trip?.id ?? 0);
       setTripCreated(true); // show invite form
     } else {
       alert("Failed to create trip");
@@ -117,8 +119,7 @@ export default function TripForm({ session }: { session: Session | null }) {
       console.log("Inviting emails:", emails);
   
       // Simulate API call (replace with real invite logic)
-      const response = await inviteMembersAction({ tripId, emails });
-  
+      await inviteMembersAction({ tripId: tripId!, emails });
       
       setEmails([]); // optionally clear emails
       setEmailInput("");

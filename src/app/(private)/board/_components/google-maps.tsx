@@ -2,7 +2,7 @@
 
 import { saveLocationAction } from "@/app/actions/trip-actions";
 import { createMap, createMarker, loadGoogleMaps } from "@/app/services/google-maps/maps";
-import type { Trip } from "@/interfaces/openapi";
+// import type { Trip } from "@/interfaces/openapi";
 import { useEffect, useRef, useState } from "react";
 
 interface SavedLocation {
@@ -16,12 +16,12 @@ export default function GoogleMaps({
   tripId,
   userId,
   initialLocations,
-  setFormData
+  // setFormData
 }: {
   tripId: number;
   userId: number;
   initialLocations: SavedLocation[];
-  setFormData:(data: Trip) => void;
+  // setFormData:(data: Trip) => void;
 }) {
   const mapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -148,13 +148,13 @@ export default function GoogleMaps({
     });
 
     if(saved.success && saved.new_location){
-      setFormData((prev) => {
-        if (!prev) return prev; // do nothing if prev is null
-        return {
-          ...prev,
-          locations: [...(prev.locations || []), saved.new_location],
-        };
-      });
+      // setFormData((prev) => {
+      //   if (!prev) return prev; // do nothing if prev is null
+      //   return {
+      //     ...prev,
+      //     locations: [...(prev.locations || []), saved.new_location],
+      //   };
+      // });
       
       
 
@@ -169,7 +169,7 @@ export default function GoogleMaps({
       });
   
       const infowindow = new google.maps.InfoWindow({
-        content: `<div>${saved.name}</div>`,
+        content: `<div>${saved.new_location.name}</div>`,
       });
       marker.addListener("click", () => infowindow.open(map, marker));
   
@@ -199,20 +199,20 @@ export default function GoogleMaps({
       longitude: String(pinnedCoords.lng),
     });
     if (saved.success && saved.new_location) {
-      setFormData((prev) => {
-        if (!prev) return prev; // handle null safely
-        return {
-          ...prev,
-          locations: [...(prev.locations || []), saved.new_location],
-        };
-      });
+      // setFormData((prev) => {
+      //   if (!prev) return prev; // handle null safely
+      //   return {
+      //     ...prev,
+      //     locations: [...(prev.locations || []), saved.new_location],
+      //   };
+      // });
       // Add permanent red marker
       const marker = createMarker(map, pinnedCoords, {
         icon: "http://maps.google.com/mapfiles/ms/icons/red-dot.png",
       });
   
       const infowindow = new google.maps.InfoWindow({
-        content: `<div>${saved.name}</div>`,
+        content: `<div>${saved.new_location.name}</div>`,
       });
       marker.addListener("click", () => infowindow.open(map, marker));
   

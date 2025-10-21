@@ -3,7 +3,6 @@
 import * as React from "react";
 import type { QuestionField } from "@/interfaces/openapi";
 import { IoIosArrowDown } from "react-icons/io";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,

@@ -10,7 +10,7 @@ import { IoAdd, IoClose } from "react-icons/io5";
 import DialogLoader from "@/app/_components/layout/dialog-loader";
 import { inviteMembersAction } from "@/app/actions/trip-actions";
 
-export default function InviteMemberDialog({tripId, setFormData}) {
+export default function InviteMemberDialog({tripId}: {tripId: number}) {
   const [isOpen, setIsOpen] = useState(false);
   const [emailInput, setEmailInput] = useState("");
   const [emails, setEmails] = useState<string[]>([]);
@@ -31,10 +31,10 @@ export default function InviteMemberDialog({tripId, setFormData}) {
     try {
       const response = await inviteMembersAction({ tripId, emails });
       if(response.success){
-        setFormData((prev) => ({
-          ...prev,
-          members: response.members,
-        }));
+        // setFormData((prev) => ({
+        //   ...prev,
+        //   members: response.members,
+        // }));
         setEmails([]);
         setIsOpen(false);
       }else{

@@ -339,7 +339,7 @@ export default function EditTripModal({ setCards }: { setCards: React.Dispatch<R
                 <div className="flex items-center mb-3 justify-between">
                   
                   <div className="flex items-center gap-2">
-                    <InviteMemberDialog tripId={formData.id} setFormData={setFormData}/>
+                    <InviteMemberDialog tripId={formData.id}/>
                   </div>
                 </div>
                 <div className=" flex flex-wrap gap-5">
@@ -562,7 +562,7 @@ export default function EditTripModal({ setCards }: { setCards: React.Dispatch<R
                         added_by: loc.added_by,
                       })) || []
                     }
-                    setFormData={setFormData}
+                    // setFormData={setFormData}
                   />
                 </Tabs.Content>
 

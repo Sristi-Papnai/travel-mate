@@ -4,10 +4,10 @@ import { authOptions } from "@/app/_libs/utils/auth";
 import { findUserTrips, getTripAnalytics, getTripData, inviteMembersService, saveTripFiles, saveTripLocations, updateTrip } from "@/db/services/trips";
 import type { CommentItem, CreateTripPayload, InviteMembersPayload, Trip, UserTrips } from "@/interfaces/openapi";
 import { getServerSession } from "next-auth";
-import { files, members, savedLocations } from "@/db/schema/postgres";
+import { members, savedLocations } from "@/db/schema/postgres";
 import { GetObjectCommandService, getPresignedUrl } from "@/app/services/S3/s3-service";
 import { db } from "@/db/client";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 
 
@@ -40,7 +40,7 @@ export async function fetchTripData(tripId : number): Promise<Trip | null> {
   const session = await getServerSession(authOptions);
   if (!session) return null;
   // Call your function with the user ID
-  const trip = await getTripData(Number(tripId),  session?.user?.id);
+  const trip = await getTripData(Number(tripId),  Number(session?.user?.id));
 
   return trip;
 }
@@ -65,7 +65,7 @@ export async function inviteMembersAction({ tripId, emails }: InviteMembersPaylo
     const url = await getPresignedUrl(key, fileType);
     const session = await getServerSession(authOptions);
 
-    const res =  await saveTripFiles({
+    await saveTripFiles({
       tripId: tripId,
       fileName: fileName,
       filePath: key,
@@ -85,14 +85,6 @@ export async function inviteMembersAction({ tripId, emails }: InviteMembersPaylo
     }else{
       return '/';
     }
-
-  }
-
-
-  export async function fetchTripFiles(tripId: number) {
-
-    // return await db.select().from(files).where(files.tripId.eq(tripId));
-    return [];
 
   }
 
@@ -147,7 +139,7 @@ export async function tripAnalytics() {
   if(!session)
   return {success: false};
 
-  const result = await getTripAnalytics(session?.user?.id);
+  const result = await getTripAnalytics(Number(session?.user?.id));
   return {success: true, trip_details: result};
 }
 

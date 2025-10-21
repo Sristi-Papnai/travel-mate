@@ -172,7 +172,7 @@ export type FileItem = {
   file_path: string | null;
   file_type: string | null;
   created_by: User;
-  uploaded_at: string;
+  uploaded_at: Date | string;
 };
 
 export type CommentItem = {
@@ -180,7 +180,7 @@ export type CommentItem = {
   trip_id: number | null;
   data: string | null;
   commented_by: User;
-  created_at?: string;
+  created_at?: Date | string;
 };
 
 export type LocationItem = {
